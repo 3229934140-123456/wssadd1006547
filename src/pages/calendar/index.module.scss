@@ -592,3 +592,33 @@
   background: $color-bg-card;
   min-height: 100rpx;
 }
+
+.progressBar {
+  position: relative;
+  margin: $spacing-md $spacing-lg 0;
+  height: 40rpx;
+  background: $color-bg-soft;
+  border-radius: 20rpx;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.progressFill {
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: 100%;
+  background: linear-gradient(90deg, $color-primary-light 0%, $color-primary 100%);
+  border-radius: 20rpx;
+  transition: width $transition-base;
+}
+
+.progressText {
+  position: relative;
+  z-index: 1;
+  font-size: 22rpx;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+}

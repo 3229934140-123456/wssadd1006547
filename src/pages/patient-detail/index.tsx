@@ -1,12 +1,26 @@
-import React, { useMemo, useState } from 'react';
-import { View, Text, Button } from '@tarojs/components';
+import React, { useMemo, useState, useCallback } from 'react';
+import { View, Text, Button, Input, ScrollView } from '@tarojs/components';
 import Taro, { useRouter, useDidShow } from '@tarojs/taro';
 import classnames from 'classnames';
 import styles from './index.module.scss';
 import Timeline from '@/components/Timeline';
-import { useAppContext } from '@/store/AppContext';
-import { getDaysAfterSurgery, formatDateCN, isToday, isOverdue, getDaysDiff } from '@/utils/date';
+import { useAppContext, getHighScoreObservations, HIGH_SCORE_THRESHOLD } from '@/store/AppContext';
+import { getDaysAfterSurgery, formatDateCN, isToday, isOverdue, getDaysDiff, addDays } from '@/utils/date';
 import type { FollowupPlanTemplate } from '@/types';
+
+type RouteNodeType = 'surgery' | 'completed' | 'pending' | 'revisit' | 'revisitDone';
+type RevisitAction = 'complete' | 'reschedule' | null;
+
+interface RouteNode {
+  id: string;
+  type: RouteNodeType;
+  title: string;
+  date: string;
+  followupId?: string;
+  isActive: boolean;
+  isPast: boolean;
+  hasHighScore?: boolean;
+}
 
 const statusText: Record<string, string> = {
   normal: '恢复中',
@@ -24,10 +38,15 @@ const PatientDetailPage: React.FC = () => {
     getFollowupsByPatientId,
     addFollowupPlanBatch,
     getFollowupPlanTemplates,
-    completeRevisitReminder
+    completeRevisitReminder,
+    rescheduleRevisitReminder
   } = useAppContext();
 
   const [showPlanPicker, setShowPlanPicker] = useState(false);
+  const [showRevisitModal, setShowRevisitModal] = useState(false);
+  const [revisitAction, setRevisitAction] = useState<RevisitAction>(null);
+  const [revisitResult, setRevisitResult] = useState('');
+  const [rescheduleDate, setRescheduleDate] = useState('');
 
   const patient = useMemo(() => patients.find(p => p.id === patientId), [patients, patientId]);
   const templates = useMemo(() => getFollowupPlanTemplates(), [getFollowupPlanTemplates]);
@@ -40,10 +59,86 @@ const PatientDetailPage: React.FC = () => {
     return getFollowupsByPatientId(patientId).filter(f => f.status === 'pending');
   }, [getFollowupsByPatientId, patientId]);
 
+  const completedFollowups = useMemo(() => {
+    return getFollowupsByPatientId(patientId).filter(f => f.status === 'completed');
+  }, [getFollowupsByPatientId, patientId]);
+
+  const nextFollowupDate = useMemo(() => {
+    if (pendingFollowups.length === 0) return undefined;
+    const sorted = [...pendingFollowups].sort((a, b) =>
+      new Date(a.scheduledDate).getTime() - new Date(b.scheduledDate).getTime()
+    );
+    return sorted[0].scheduledDate;
+  }, [pendingFollowups]);
+
+  const followupRoute = useMemo((): RouteNode[] => {
+    if (!patient) return [];
+    const nodes: RouteNode[] = [];
+    const today = new Date().toISOString().split('T')[0];
+
+    nodes.push({
+      id: 'surgery',
+      type: 'surgery',
+      title: '种植手术',
+      date: patient.surgeryDate,
+      isActive: false,
+      isPast: patient.surgeryDate < today
+    });
+
+    const allFollowups = [...completedFollowups, ...pendingFollowups].sort(
+      (a, b) => new Date(a.scheduledDate).getTime() - new Date(b.scheduledDate).getTime()
+    );
+
+    for (const f of allFollowups) {
+      const isCompleted = f.status === 'completed';
+      const isPast = f.scheduledDate < today && isCompleted;
+      const isActive = f.scheduledDate >= today && !isCompleted;
+      const hasHighScore = getHighScoreObservations(f.observations).length > 0;
+
+      nodes.push({
+        id: f.id,
+        type: isCompleted ? 'completed' : 'pending',
+        title: f.templateName
+          ? `${f.templateName} · ${formatDateCN(f.scheduledDate).replace(/^\d{4}年/, '')}`
+          : `术后${getDaysAfterSurgery(patient.surgeryDate, f.scheduledDate)}天回访`,
+        date: f.scheduledDate,
+        followupId: f.id,
+        isActive,
+        isPast,
+        hasHighScore
+      });
+    }
+
+    if (patient.revisitReminder && !patient.revisitReminder.completed) {
+      nodes.push({
+        id: 'revisit',
+        type: 'revisit',
+        title: '建议复诊',
+        date: patient.revisitReminder.scheduledDate,
+        isActive: true,
+        isPast: patient.revisitReminder.scheduledDate < today
+      });
+    }
+
+    if (patient.revisitReminder?.completed) {
+      nodes.push({
+        id: 'revisitDone',
+        type: 'revisitDone',
+        title: '已复诊',
+        date: patient.revisitReminder.scheduledDate,
+        isActive: false,
+        isPast: true
+      });
+    }
+
+    return nodes;
+  }, [patient, completedFollowups, pendingFollowups]);
+
   useDidShow(() => {
     console.log('[PatientDetail] Loaded patient:', patient?.name,
       'timeline:', timelineRecords.length,
-      'pending followups:', pendingFollowups.length);
+      'pending followups:', pendingFollowups.length,
+      'nextFollowupDate:', nextFollowupDate);
   });
 
   if (!patient) {
@@ -98,18 +193,43 @@ const PatientDetailPage: React.FC = () => {
     });
   };
 
-  const handleCompleteRevisit = () => {
-    if (!patient.revisitReminder) return;
-    Taro.showModal({
-      title: '复诊完成',
-      content: `确认患者已完成复诊？`,
-      success: (res) => {
-        if (res.confirm) {
-          completeRevisitReminder(patientId);
-          Taro.showToast({ title: '复诊已确认', icon: 'success' });
-        }
-      }
-    });
+  const openRevisitModal = useCallback(() => {
+    setShowRevisitModal(true);
+    setRevisitAction(null);
+    setRevisitResult('');
+    setRescheduleDate(addDays(new Date().toISOString().split('T')[0], 3));
+  }, []);
+
+  const handleConfirmRevisitComplete = useCallback(() => {
+    completeRevisitReminder(patientId, revisitResult.trim() || undefined);
+    Taro.showToast({ title: '复诊已完成', icon: 'success' });
+    setShowRevisitModal(false);
+  }, [patientId, revisitResult, completeRevisitReminder]);
+
+  const handleConfirmReschedule = useCallback(() => {
+    if (!rescheduleDate) return;
+    rescheduleRevisitReminder(patientId, rescheduleDate);
+    Taro.showToast({ title: '改期成功', icon: 'success' });
+    setShowRevisitModal(false);
+  }, [patientId, rescheduleDate, rescheduleRevisitReminder]);
+
+  const handleRouteNodeClick = (node: RouteNode) => {
+    if (node.followupId && node.type === 'pending') {
+      handleFollowupClick(node.followupId);
+    } else if (node.followupId && node.type === 'completed') {
+      handleFollowupClick(node.followupId);
+    }
+  };
+
+  const getNodeIcon = (type: RouteNodeType) => {
+    switch (type) {
+      case 'surgery': return '🏥';
+      case 'completed': return '✅';
+      case 'pending': return '⏰';
+      case 'revisit': return '💜';
+      case 'revisitDone': return '💚';
+      default: return '•';
+    }
   };
 
   return (
@@ -148,8 +268,13 @@ const PatientDetailPage: React.FC = () => {
             <Text className={styles.infoValue}>{patient.implantCount} 颗</Text>
           </View>
           <View className={styles.infoItem}>
-            <Text className={styles.infoLabel}>植体位置</Text>
-            <Text className={styles.infoValue}>{patient.implantPosition}</Text>
+            <Text className={styles.infoLabel}>下次回访</Text>
+            <Text className={classnames(
+              styles.infoValue,
+              nextFollowupDate && isOverdue(nextFollowupDate) && styles.overdueText
+            )}>
+              {nextFollowupDate ? formatDateCN(nextFollowupDate) : '暂无计划'}
+            </Text>
           </View>
         </View>
         <View className={styles.tagsRow}>
@@ -168,19 +293,62 @@ const PatientDetailPage: React.FC = () => {
         )}
       </View>
 
+      {followupRoute.length > 1 && (
+        <View className={styles.routeSection}>
+          <Text className={styles.sectionTitle}>长期随访路线</Text>
+          <ScrollView className={styles.routeContainer} scrollX>
+            <View className={styles.routeTrack}>
+              {followupRoute.map((node, idx) => {
+                const isLast = idx === followupRoute.length - 1;
+                return (
+                  <View key={node.id} className={styles.routeNodeWrapper}>
+                    <View
+                      className={classnames(
+                        styles.routeNode,
+                        node.isActive && styles.routeNodeActive,
+                        node.isPast && styles.routeNodePast,
+                        node.hasHighScore && styles.routeNodeHighScore,
+                        node.type === 'revisit' && styles.routeNodeRevisit,
+                        node.type === 'revisitDone' && styles.routeNodeRevisitDone
+                      )}
+                      onClick={() => handleRouteNodeClick(node)}
+                    >
+                      <Text className={styles.routeIcon}>{getNodeIcon(node.type)}</Text>
+                      <Text className={styles.routeNodeTitle}>{node.title}</Text>
+                      <Text className={styles.routeNodeDate}>
+                        {isToday(node.date) ? '今日' : isOverdue(node.date) && !node.isPast ? `逾期${getDaysDiff(node.date, new Date().toISOString().split('T')[0])}天` : formatDateCN(node.date).replace(/^\d{4}年/, '')}
+                      </Text>
+                    </View>
+                    {!isLast && (
+                      <View className={classnames(
+                        styles.routeConnector,
+                        node.isPast && styles.routeConnectorPast
+                      )} />
+                    )}
+                  </View>
+                );
+              })}
+            </View>
+          </ScrollView>
+        </View>
+      )}
+
       {patient.revisitReminder && !patient.revisitReminder.completed && (
-        <View className={styles.revisitBanner} onClick={handleCompleteRevisit}>
+        <View className={styles.revisitBanner} onClick={openRevisitModal}>
           <View className={styles.revisitIcon}>🏥</View>
           <View className={styles.revisitContent}>
             <Text className={styles.revisitTitle}>建议复诊提醒</Text>
             <Text className={styles.revisitDesc}>
               {patient.revisitReminder.reason || '请跟进'} · 计划日期：{formatDateCN(patient.revisitReminder.scheduledDate)}
+              {patient.revisitReminder.rescheduledCount && patient.revisitReminder.rescheduledCount > 0 && (
+                <Text className={styles.revisitOverdue}> （已改期{patient.revisitReminder.rescheduledCount}次）</Text>
+              )}
               {isOverdue(patient.revisitReminder.scheduledDate) && (
                 <Text className={styles.revisitOverdue}> （逾期{getDaysDiff(patient.revisitReminder.scheduledDate, new Date().toISOString().split('T')[0])}天）</Text>
               )}
             </Text>
           </View>
-          <View className={styles.revisitAction}>确认完成 ›</View>
+          <View className={styles.revisitAction}>处理 ›</View>
         </View>
       )}
 
@@ -190,6 +358,7 @@ const PatientDetailPage: React.FC = () => {
           {pendingFollowups.map(followup => {
             const pendingOverdue = isOverdue(followup.scheduledDate);
             const overdueDays = pendingOverdue ? getDaysDiff(followup.scheduledDate, new Date().toISOString().split('T')[0]) : 0;
+            const highScoreObs = getHighScoreObservations(followup.observations);
             return (
               <View
                 key={followup.id}
@@ -212,7 +381,10 @@ const PatientDetailPage: React.FC = () => {
                           ? '今日'
                           : formatDateCN(followup.scheduledDate)}回访
                     </Text>
-                    {followup.isAbnormal && (
+                    {highScoreObs.length > 0 && (
+                      <View className={styles.highScoreTag}>🔥 高分</View>
+                    )}
+                    {followup.isAbnormal && highScoreObs.length === 0 && (
                       <View className={styles.abnormalTag}>异常</View>
                     )}
                     {isToday(followup.scheduledDate) && !pendingOverdue && (
@@ -225,14 +397,17 @@ const PatientDetailPage: React.FC = () => {
                   <Text className={styles.pendingArrow}>›</Text>
                 </View>
                 <View className={styles.pendingObs}>
-                  {followup.observations.map((obs, i) => (
-                    <Text key={i} className={classnames(
-                      styles.obsTag,
-                      (obs.value ?? 0) >= (obs.threshold ?? 5) && styles.highScoreObs
-                    )}>
-                      {obs.name}{obs.value ? ` ${obs.value}分` : ''}
-                    </Text>
-                  ))}
+                  {followup.observations.map((obs, i) => {
+                    const isHigh = (obs.value ?? 0) > (obs.threshold ?? HIGH_SCORE_THRESHOLD);
+                    return (
+                      <Text key={i} className={classnames(
+                        styles.obsTag,
+                        isHigh && styles.highScoreObs
+                      )}>
+                        {obs.name}{obs.value ? ` ${obs.value}分` : ''}
+                      </Text>
+                    );
+                  })}
                 </View>
                 {followup.patientSymptoms && (
                   <Text className={styles.pendingSymptoms}>{followup.patientSymptoms}</Text>
@@ -288,6 +463,70 @@ const PatientDetailPage: React.FC = () => {
             <Button className={styles.modalCancel} onClick={() => setShowPlanPicker(false)}>
               取消
             </Button>
+          </View>
+        </View>
+      )}
+
+      {showRevisitModal && patient.revisitReminder && (
+        <View className={styles.modalMask} onClick={() => setShowRevisitModal(false)}>
+          <View className={styles.modalContent} onClick={e => e.stopPropagation()}>
+            <Text className={styles.modalTitle}>复诊提醒处理</Text>
+            <Text className={styles.modalSubtitle}>
+              {patient.name} · {formatDateCN(patient.revisitReminder.scheduledDate)}
+            </Text>
+            <Text className={styles.modalDesc}>{patient.revisitReminder.reason || '请跟进复诊情况'}</Text>
+
+            {!revisitAction ? (
+              <View className={styles.actionRow}>
+                <Button className={classnames(styles.actionOptionBtn, styles.completeBtn)} onClick={() => setRevisitAction('complete')}>
+                  ✅ 确认复诊完成
+                </Button>
+                <Button className={classnames(styles.actionOptionBtn, styles.rescheduleBtn)} onClick={() => setRevisitAction('reschedule')}>
+                  📅 改约时间
+                </Button>
+                <Button className={styles.modalCancel} onClick={() => setShowRevisitModal(false)}>
+                  取消
+                </Button>
+              </View>
+            ) : revisitAction === 'complete' ? (
+              <View className={styles.formRow}>
+                <Text className={styles.formLabel}>复诊结论（可选）</Text>
+                <Input
+                  className={styles.formInput}
+                  placeholder='请填写复诊结果、处理方案等'
+                  value={revisitResult}
+                  onInput={e => setRevisitResult(e.detail.value)}
+                />
+                <View className={styles.formActions}>
+                  <Button className={styles.formBack} onClick={() => setRevisitAction(null)}>返回</Button>
+                  <Button className={styles.formConfirm} onClick={handleConfirmRevisitComplete}>
+                    确认完成
+                  </Button>
+                </View>
+              </View>
+            ) : (
+              <View className={styles.formRow}>
+                <Text className={styles.formLabel}>新复诊日期</Text>
+                <Input
+                  className={styles.formInput}
+                  placeholder='请输入新日期，格式：2026-06-25'
+                  value={rescheduleDate}
+                  onInput={e => setRescheduleDate(e.detail.value)}
+                />
+                <Text className={styles.formHint}>
+                  快捷选择：
+                  <Text className={styles.quickDate} onClick={() => setRescheduleDate(addDays(new Date().toISOString().split('T')[0], 1))}>明天</Text>
+                  <Text className={styles.quickDate} onClick={() => setRescheduleDate(addDays(new Date().toISOString().split('T')[0], 3))}>3天后</Text>
+                  <Text className={styles.quickDate} onClick={() => setRescheduleDate(addDays(new Date().toISOString().split('T')[0], 7))}>1周后</Text>
+                </Text>
+                <View className={styles.formActions}>
+                  <Button className={styles.formBack} onClick={() => setRevisitAction(null)}>返回</Button>
+                  <Button className={styles.formConfirm} onClick={handleConfirmReschedule}>
+                    确认改期
+                  </Button>
+                </View>
+              </View>
+            )}
           </View>
         </View>
       )}

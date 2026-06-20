@@ -541,3 +541,236 @@
     opacity: 0.8;
   }
 }
+
+.highScoreTag {
+  padding: 4rpx $spacing-sm;
+  border-radius: $radius-xs;
+  font-size: $font-size-xs;
+  background: rgba(239, 68, 68, 0.15);
+  color: $color-error;
+  font-weight: $font-weight-semibold;
+  margin-left: $spacing-xs;
+}
+
+.routeSection {
+  margin: $spacing-md $page-padding;
+  background: $color-bg-card;
+  border-radius: $radius-lg;
+  box-shadow: $shadow-card;
+  padding: $spacing-lg;
+}
+
+.routeContainer {
+  white-space: nowrap;
+  width: 100%;
+}
+
+.routeTrack {
+  display: flex;
+  align-items: flex-start;
+  gap: 0;
+  padding-right: $spacing-lg;
+}
+
+.routeNodeWrapper {
+  display: flex;
+  align-items: flex-start;
+  flex-shrink: 0;
+}
+
+.routeNode {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: $spacing-md $spacing-sm;
+  border-radius: $radius-md;
+  min-width: 140rpx;
+  transition: all $transition-base;
+
+  &.routeNodeActive {
+    background: linear-gradient(135deg, rgba(15, 118, 110, 0.15) 0%, rgba(15, 118, 110, 0.05) 100%);
+    border: 2rpx solid rgba(15, 118, 110, 0.3);
+  }
+
+  &.routeNodePast {
+    opacity: 0.7;
+    background: rgba(226, 232, 240, 0.3);
+  }
+
+  &.routeNodeHighScore {
+    border: 2rpx solid rgba(239, 68, 68, 0.3);
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.1) 0%, rgba(239, 68, 68, 0.04) 100%);
+  }
+
+  &.routeNodeRevisit {
+    background: linear-gradient(135deg, rgba(124, 58, 237, 0.15) 0%, rgba(124, 58, 237, 0.05) 100%);
+    border: 2rpx solid rgba(124, 58, 237, 0.3);
+  }
+
+  &.routeNodeRevisitDone {
+    background: linear-gradient(135deg, rgba(34, 197, 94, 0.1) 0%, rgba(34, 197, 94, 0.04) 100%);
+  }
+
+  &:active {
+    transform: scale(0.97);
+    opacity: 0.9;
+  }
+}
+
+.routeIcon {
+  font-size: 36rpx;
+  margin-bottom: $spacing-xs;
+}
+
+.routeNodeTitle {
+  font-size: 20rpx;
+  color: $color-text-primary;
+  font-weight: $font-weight-medium;
+  text-align: center;
+  line-height: 1.3;
+  white-space: normal;
+  max-width: 140rpx;
+  margin-bottom: 4rpx;
+}
+
+.routeNodeDate {
+  font-size: 18rpx;
+  color: $color-text-secondary;
+  font-weight: $font-weight-medium;
+
+  .routeNodeHighScore & {
+    color: $color-error;
+  }
+
+  .routeNodeRevisit & {
+    color: #7C3AED;
+  }
+
+  .routeNodeActive & {
+    color: $color-primary;
+    font-weight: $font-weight-semibold;
+  }
+}
+
+.routeConnector {
+  width: 60rpx;
+  height: 4rpx;
+  background: $color-divider;
+  margin-top: 60rpx;
+  flex-shrink: 0;
+
+  &.routeConnectorPast {
+    background: $color-primary;
+  }
+}
+
+.actionRow {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-md;
+}
+
+.actionOptionBtn {
+  @include button-reset;
+  width: 100%;
+  height: $button-height-lg;
+  border-radius: $radius-button;
+  font-size: $font-size-md;
+  font-weight: $font-weight-semibold;
+  transition: all $transition-base;
+
+  &:active {
+    opacity: 0.85;
+    transform: scale(0.99);
+  }
+}
+
+.completeBtn {
+  background: $color-primary;
+  color: $color-text-white;
+}
+
+.rescheduleBtn {
+  background: rgba(124, 58, 237, 0.1);
+  color: #7C3AED;
+}
+
+.formRow {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-md;
+}
+
+.formLabel {
+  font-size: $font-size-sm;
+  color: $color-text-primary;
+  font-weight: $font-weight-semibold;
+}
+
+.formInput {
+  width: 100%;
+  height: $button-height-lg;
+  padding: 0 $spacing-md;
+  background: $color-bg-soft;
+  border: 2rpx solid $color-border;
+  border-radius: $radius-button;
+  font-size: $font-size-md;
+  color: $color-text-primary;
+
+  &::placeholder {
+    color: $color-text-disabled;
+  }
+}
+
+.formHint {
+  font-size: $font-size-xs;
+  color: $color-text-tertiary;
+}
+
+.quickDate {
+  display: inline-block;
+  margin-left: $spacing-sm;
+  color: $color-primary;
+  font-weight: $font-weight-medium;
+
+  &:active {
+    opacity: 0.8;
+  }
+}
+
+.formActions {
+  display: flex;
+  gap: $spacing-md;
+  margin-top: $spacing-sm;
+}
+
+.formBack {
+  @include button-reset;
+  flex: 1;
+  height: $button-height-lg;
+  border-radius: $radius-button;
+  background: $color-bg-soft;
+  color: $color-text-secondary;
+  font-size: $font-size-md;
+  font-weight: $font-weight-medium;
+
+  &:active {
+    opacity: 0.8;
+  }
+}
+
+.formConfirm {
+  @include button-reset;
+  flex: 2;
+  height: $button-height-lg;
+  border-radius: $radius-button;
+  background: $color-primary;
+  color: $color-text-white;
+  font-size: $font-size-md;
+  font-weight: $font-weight-semibold;
+
+  &:active {
+    opacity: 0.9;
+    transform: scale(0.99);
+  }
+}

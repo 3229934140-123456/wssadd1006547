@@ -1,3 +1,10 @@
+export interface HighScoreDetail {
+  type: ObservationType;
+  name: string;
+  value: number;
+  threshold: number;
+}
+
 export interface Patient {
   id: string;
   name: string;
@@ -18,6 +25,8 @@ export interface Patient {
     scheduledDate: string;
     completed: boolean;
     reason: string;
+    result?: string;
+    rescheduledCount?: number;
   };
   createdAt: string;
 }
@@ -80,6 +89,7 @@ export interface TodoItem {
   scheduledDate: string;
   isRead: boolean;
   highScoreTypes?: ObservationType[];
+  highScoreDetails?: HighScoreDetail[];
   followupId?: string;
 }
 

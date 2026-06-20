@@ -26,6 +26,8 @@ interface DayFollowup {
   todayCount: number;
   abnormalCount: number;
   highScoreCount: number;
+  pendingCount: number;
+  completedCount: number;
 }
 
 const CalendarPage: React.FC = () => {
@@ -37,10 +39,9 @@ const CalendarPage: React.FC = () => {
   const todayStr = new Date().toISOString().split('T')[0];
 
   const groupedByDate = useMemo((): DayFollowup[] => {
-    const pendingTasks = followupTasks.filter(f => f.status === 'pending');
     const dateMap = new Map<string, DayFollowup>();
 
-    for (const task of pendingTasks) {
+    for (const task of followupTasks) {
       if (!dateMap.has(task.scheduledDate)) {
         dateMap.set(task.scheduledDate, {
           date: task.scheduledDate,
@@ -48,38 +49,46 @@ const CalendarPage: React.FC = () => {
           overdueCount: 0,
           todayCount: 0,
           abnormalCount: 0,
-          highScoreCount: 0
+          highScoreCount: 0,
+          pendingCount: 0,
+          completedCount: 0
         });
       }
       const day = dateMap.get(task.scheduledDate)!;
-      const isOverdueDay = isOverdue(task.scheduledDate);
-      const isTodayDay = isToday(task.scheduledDate);
+      const isPending = task.status === 'pending';
+      const isOverdueDay = isPending && isOverdue(task.scheduledDate);
+      const isTodayDay = isPending && isToday(task.scheduledDate);
       const highScoreObs = getHighScoreObservations(task.observations);
       const isHighScore = highScoreObs.length > 0;
 
-      day.followups.push({
-        id: task.id,
-        patientId: task.patientId,
-        patientName: task.patientName,
-        isAbnormal: task.isAbnormal,
-        isHighScore,
-        observations: task.observations.map(o => ({ name: o.name, value: o.value, threshold: o.threshold })),
-        symptoms: task.patientSymptoms
-      });
+      if (isPending) {
+        day.followups.push({
+          id: task.id,
+          patientId: task.patientId,
+          patientName: task.patientName,
+          isAbnormal: task.isAbnormal,
+          isHighScore,
+          observations: task.observations.map(o => ({ name: o.name, value: o.value, threshold: o.threshold })),
+          symptoms: task.patientSymptoms
+        });
 
-      if (isOverdueDay) day.overdueCount++;
-      if (isTodayDay) day.todayCount++;
-      if (task.isAbnormal) day.abnormalCount++;
-      if (isHighScore) day.highScoreCount++;
+        if (isOverdueDay) day.overdueCount++;
+        if (isTodayDay) day.todayCount++;
+        if (task.isAbnormal) day.abnormalCount++;
+        if (isHighScore) day.highScoreCount++;
+        day.pendingCount++;
+      } else {
+        day.completedCount++;
+      }
     }
 
     return Array.from(dateMap.values()).sort((a, b) => {
-      const aOverdue = isOverdue(a.date) && !isToday(a.date);
-      const bOverdue = isOverdue(b.date) && !isToday(b.date);
+      const aOverdue = isOverdue(a.date) && !isToday(a.date) && a.pendingCount > 0;
+      const bOverdue = isOverdue(b.date) && !isToday(b.date) && b.pendingCount > 0;
       if (aOverdue !== bOverdue) return aOverdue ? -1 : 1;
 
-      const aIsToday = isToday(a.date);
-      const bIsToday = isToday(b.date);
+      const aIsToday = isToday(a.date) && a.pendingCount > 0;
+      const bIsToday = isToday(b.date) && b.pendingCount > 0;
       if (aIsToday !== bIsToday) return aIsToday ? -1 : 1;
 
       return new Date(a.date).getTime() - new Date(b.date).getTime();
@@ -207,7 +216,7 @@ const CalendarPage: React.FC = () => {
 
                     <View className={styles.obsList}>
                       {followup.observations.map((obs, i) => {
-                        const isHigh = (obs.value ?? 0) >= (obs.threshold ?? 5);
+                        const isHigh = (obs.value ?? 0) > (obs.threshold ?? 5);
                         return (
                           <View
                             key={i}
@@ -319,6 +328,20 @@ const CalendarPage: React.FC = () => {
                   </Text>
                 )}
               </View>
+            </View>
+            <View className={styles.progressBar}>
+              <View
+                className={styles.progressFill}
+                style={{
+                  width: `${getDayByDate(expandedDate)!.completedCount + getDayByDate(expandedDate)!.pendingCount > 0
+                    ? (getDayByDate(expandedDate)!.completedCount / (getDayByDate(expandedDate)!.completedCount + getDayByDate(expandedDate)!.pendingCount)) * 100
+                    : 0}%`
+                }}
+              />
+              <Text className={styles.progressText}>
+                {getDayByDate(expandedDate)!.completedCount} / {getDayByDate(expandedDate)!.completedCount + getDayByDate(expandedDate)!.pendingCount} 已完成
+                {getDayByDate(expandedDate)!.pendingCount > 0 && ` · 还有 ${getDayByDate(expandedDate)!.pendingCount} 条待处理`}
+              </Text>
             </View>
             <View className={styles.dayList}>
               {getDayByDate(expandedDate)!.followups.map(followup => {
@@ -475,6 +498,20 @@ const CalendarPage: React.FC = () => {
                     </Text>
                   )}
                 </View>
+              </View>
+              <View className={styles.progressBar}>
+                <View
+                  className={styles.progressFill}
+                  style={{
+                    width: `${getDayByDate(expandedDate)!.completedCount + getDayByDate(expandedDate)!.pendingCount > 0
+                      ? (getDayByDate(expandedDate)!.completedCount / (getDayByDate(expandedDate)!.completedCount + getDayByDate(expandedDate)!.pendingCount)) * 100
+                      : 0}%`
+                  }}
+                />
+                <Text className={styles.progressText}>
+                  {getDayByDate(expandedDate)!.completedCount} / {getDayByDate(expandedDate)!.completedCount + getDayByDate(expandedDate)!.pendingCount} 已完成
+                  {getDayByDate(expandedDate)!.pendingCount > 0 && ` · 还有 ${getDayByDate(expandedDate)!.pendingCount} 条待处理`}
+                </Text>
               </View>
               <View className={styles.dayList}>
                 {getDayByDate(expandedDate)!.followups.map(followup => {

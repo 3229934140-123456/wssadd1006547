@@ -36,7 +36,7 @@ function saveToStorage<T>(key: string, data: T): void {
 export const HIGH_SCORE_THRESHOLD = 5;
 
 export const getHighScoreObservations = (observations: ObservationItem[]): ObservationItem[] => {
-  return observations.filter(o => (o.value ?? 0) >= (o.threshold ?? HIGH_SCORE_THRESHOLD));
+  return observations.filter(o => (o.value ?? 0) > (o.threshold ?? HIGH_SCORE_THRESHOLD));
 };
 
 export const observationLabel: Record<ObservationType, string> = {
@@ -67,7 +67,8 @@ interface AppContextType {
   getTodoByFollowupId: (followupId: string) => TodoItem | undefined;
   addFollowupPlanBatch: (patientId: string, templateIndex?: number) => string[];
   getHighScoreFollowupTasks: () => FollowupTask[];
-  completeRevisitReminder: (patientId: string) => void;
+  completeRevisitReminder: (patientId: string, result?: string) => void;
+  rescheduleRevisitReminder: (patientId: string, newDate: string) => void;
   getFollowupPlanTemplates: () => typeof followupPlanTemplates;
 }
 
@@ -152,6 +153,12 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     const highScoreObs = getHighScoreObservations(task.observations);
     const hasHighScore = highScoreObs.length > 0;
     const highScoreTypes = highScoreObs.map(o => o.type);
+    const highScoreDetails = highScoreObs.map(o => ({
+      type: o.type,
+      name: o.name,
+      value: o.value ?? 0,
+      threshold: o.threshold ?? HIGH_SCORE_THRESHOLD
+    }));
 
     let type: TodoItem['type'] = 'pending';
     if (task.isAbnormal) type = 'abnormal';
@@ -173,6 +180,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       scheduledDate: task.scheduledDate,
       isRead: false,
       highScoreTypes,
+      highScoreDetails,
       followupId: task.id
     };
     setTodoItems(prev => [newTodo, ...prev]);
@@ -280,6 +288,12 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
       const highScoreObs = getHighScoreObservations(observations);
       const hasHighScore = highScoreObs.length > 0;
+      const highScoreDetails = highScoreObs.map(o => ({
+        type: o.type,
+        name: o.name,
+        value: o.value ?? 0,
+        threshold: o.threshold ?? HIGH_SCORE_THRESHOLD
+      }));
 
       let type: TodoItem['type'] = 'pending';
       if (newTask.isAbnormal) type = 'abnormal';
@@ -300,6 +314,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         scheduledDate,
         isRead: false,
         highScoreTypes: highScoreObs.map(o => o.type),
+        highScoreDetails,
         followupId: taskId
       };
       setTodoItems(prev => [newTodo, ...prev]);
@@ -348,14 +363,15 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     console.log('[AppContext] Updated followup task:', id);
   }, []);
 
-  const completeRevisitReminder = useCallback((patientId: string) => {
+  const completeRevisitReminder = useCallback((patientId: string, result?: string) => {
     setPatients(prev => prev.map(p => {
       if (p.id !== patientId || !p.revisitReminder) return p;
       return {
         ...p,
         revisitReminder: {
           ...p.revisitReminder,
-          completed: true
+          completed: true,
+          result
         }
       };
     }));
@@ -368,13 +384,51 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       date: today,
       type: 'revisit',
       title: '复诊完成',
-      description: '患者已按建议完成复诊，继续观察恢复情况',
-      isAbnormal: false
+      description: result || '患者已按建议完成复诊，继续观察恢复情况',
+      isAbnormal: false,
+      doctorNotes: result
     };
     addTimelineRecord(patientId, revisitRecord);
 
     console.log('[AppContext] Completed revisit reminder for:', patientId);
   }, [addTimelineRecord]);
+
+  const rescheduleRevisitReminder = useCallback((patientId: string, newDate: string) => {
+    setPatients(prev => prev.map(p => {
+      if (p.id !== patientId || !p.revisitReminder) return p;
+      const newRescheduledCount = (p.revisitReminder.rescheduledCount ?? 0);
+      return {
+        ...p,
+        revisitReminder: {
+          ...p.revisitReminder,
+          scheduledDate: newDate,
+          rescheduledCount: newRescheduledCount + 1
+        }
+      };
+    }));
+
+    setTodoItems(prev => prev.map(t => {
+      if (t.patientId === patientId && t.type === 'revisit') {
+        return { ...t, scheduledDate: newDate, isRead: false };
+      }
+      return t;
+    }));
+
+    setTimelines(prev => {
+      const existing = prev[patientId] || [];
+      const record: TimelineRecord = {
+        id: `t_${patientId}_revisit_reschedule_${Date.now()}`,
+        date: new Date().toISOString().split('T')[0],
+        type: 'revisit',
+        title: '复诊改期',
+        description: `复诊时间已调整至 ${formatDateCN(newDate)}`,
+        isAbnormal: false
+      };
+      return { ...prev, [patientId]: [record, ...existing] };
+    });
+
+    console.log('[AppContext] Rescheduled revisit reminder for:', patientId, 'to:', newDate);
+  }, []);
 
   const completeFollowup = useCallback((followupId: string, patientId: string, action: DoctorAction, notes: string) => {
     const today = new Date().toISOString().split('T')[0];
@@ -465,7 +519,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
     setPatients(prev => prev.map(p => {
       if (p.id !== patientId) return p;
-      const hasAbnormal = followup?.observations.some(o => (o.value || 0) >= (o.threshold ?? HIGH_SCORE_THRESHOLD)) || false;
+      const hasAbnormal = followup?.observations.some(o => (o.value || 0) > (o.threshold ?? HIGH_SCORE_THRESHOLD)) || false;
       const pendingFollowups = followupTasks.filter(
         f => f.patientId === patientId && f.status === 'pending' && f.id !== followupId
       );
@@ -526,6 +580,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       addFollowupPlanBatch,
       getHighScoreFollowupTasks,
       completeRevisitReminder,
+      rescheduleRevisitReminder,
       getFollowupPlanTemplates
     }}>
       {children}
