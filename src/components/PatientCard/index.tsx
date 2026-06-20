@@ -3,17 +3,18 @@ import { View, Text } from '@tarojs/components';
 import Taro from '@tarojs/taro';
 import classnames from 'classnames';
 import styles from './index.module.scss';
-import type { Patient } from '@/types';
-import { getDaysAfterSurgery, getRelativeDateLabel } from '@/utils/date';
+import type { Patient, FollowupTask } from '@/types';
+import { getDaysAfterSurgery, isToday } from '@/utils/date';
 
 interface PatientCardProps {
   patient: Patient;
+  todayFollowup?: FollowupTask;
   onClick?: () => void;
 }
 
-const PatientCard: React.FC<PatientCardProps> = ({ patient, onClick }) => {
+const PatientCard: React.FC<PatientCardProps> = ({ patient, todayFollowup, onClick }) => {
   const daysAfterSurgery = getDaysAfterSurgery(patient.surgeryDate);
-  
+
   const statusText = {
     normal: '恢复中',
     abnormal: '需关注',
@@ -30,8 +31,30 @@ const PatientCard: React.FC<PatientCardProps> = ({ patient, onClick }) => {
     }
   };
 
+  const handleTodayFollowup = (e: any) => {
+    e.stopPropagation();
+    if (todayFollowup) {
+      Taro.navigateTo({
+        url: `/pages/followup-detail/index?id=${todayFollowup.id}&patientId=${patient.id}`
+      });
+    }
+  };
+
   return (
-    <View className={styles.card} onClick={handleClick}>
+    <View className={classnames(styles.card, todayFollowup && styles.todayCard)} onClick={handleClick}>
+      {todayFollowup && (
+        <View className={styles.todayBanner} onClick={handleTodayFollowup}>
+          <View className={styles.todayBannerLeft}>
+            <Text className={styles.todayBannerDot}>●</Text>
+            <Text className={styles.todayBannerText}>今日回访待处理</Text>
+            {todayFollowup.isAbnormal && (
+              <Text className={styles.todayAbnormalTag}>异常</Text>
+            )}
+          </View>
+          <Text className={styles.todayBannerAction}>立即处理 ›</Text>
+        </View>
+      )}
+
       <View className={styles.header}>
         <View className={styles.patientInfo}>
           <View className={styles.avatar}>
@@ -79,11 +102,15 @@ const PatientCard: React.FC<PatientCardProps> = ({ patient, onClick }) => {
           术后 <Text className={styles.daysNum}>{daysAfterSurgery}</Text> 天
           <Text className={styles.followupCount}> · 已回访 {patient.followupCount} 次</Text>
         </View>
-        {patient.nextFollowupDate && (
+        {todayFollowup ? (
+          <View className={styles.todayFollowupTag} onClick={handleTodayFollowup}>
+            今日回访
+          </View>
+        ) : patient.nextFollowupDate && (
           <View className={styles.nextFollowup}>
             下次回访：
-            <Text className={styles.date}>
-              {getRelativeDateLabel(patient.nextFollowupDate)}
+            <Text className={classnames(styles.date, isToday(patient.nextFollowupDate) && styles.todayDate)}>
+              {isToday(patient.nextFollowupDate) ? '今天' : patient.nextFollowupDate}
             </Text>
           </View>
         )}

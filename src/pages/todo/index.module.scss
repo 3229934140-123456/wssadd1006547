@@ -59,6 +59,17 @@
     font-weight: $font-weight-medium;
   }
 
+  &.todayTab {
+    background: rgba(239, 68, 68, 0.1);
+    color: $color-error;
+    font-weight: $font-weight-medium;
+
+    &.active {
+      background: $color-error;
+      color: $color-text-white;
+    }
+  }
+
   &:active {
     opacity: 0.9;
   }
@@ -96,6 +107,11 @@
 
   &.low {
     border-left-color: $color-text-tertiary;
+  }
+
+  &.todayCard {
+    border: 2rpx solid $color-primary;
+    box-shadow: 0 4rpx 20rpx rgba(15, 118, 110, 0.15);
   }
 
   &:active {
@@ -158,6 +174,23 @@
   background: rgba(15, 118, 110, 0.1);
   color: $color-primary;
   margin-right: $spacing-sm;
+}
+
+.todayTag {
+  display: inline-block;
+  padding: 4rpx $spacing-sm;
+  border-radius: $radius-xs;
+  font-size: $font-size-xs;
+  background: rgba(239, 68, 68, 0.15);
+  color: $color-error;
+  font-weight: $font-weight-medium;
+  margin-right: $spacing-sm;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
 }
 
 .description {

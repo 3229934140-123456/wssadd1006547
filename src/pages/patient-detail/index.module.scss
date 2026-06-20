@@ -227,3 +227,94 @@
   color: $color-text-tertiary;
   font-size: $font-size-sm;
 }
+
+.pendingCard {
+  background: $color-bg-card;
+  border-radius: $radius-lg;
+  padding: $spacing-lg;
+  margin-bottom: $spacing-md;
+  border-left: 6rpx solid $color-primary;
+  box-shadow: $shadow-card;
+  transition: all $transition-base;
+
+  &:active {
+    transform: scale(0.99);
+    opacity: 0.9;
+  }
+}
+
+.todayPending {
+  border-left-color: $color-error;
+  border: 2rpx solid rgba(239, 68, 68, 0.3);
+  box-shadow: 0 4rpx 20rpx rgba(239, 68, 68, 0.12);
+}
+
+.pendingHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: $spacing-sm;
+}
+
+.pendingInfo {
+  display: flex;
+  align-items: center;
+  gap: $spacing-sm;
+}
+
+.pendingDate {
+  font-size: $font-size-md;
+  font-weight: $font-weight-medium;
+  color: $color-text-primary;
+}
+
+.pendingArrow {
+  font-size: 40rpx;
+  color: $color-text-tertiary;
+}
+
+.abnormalTag {
+  padding: 4rpx $spacing-sm;
+  border-radius: $radius-xs;
+  font-size: $font-size-xs;
+  background: rgba(239, 68, 68, 0.1);
+  color: $color-error;
+  font-weight: $font-weight-medium;
+}
+
+.todayTag {
+  padding: 4rpx $spacing-sm;
+  border-radius: $radius-xs;
+  font-size: $font-size-xs;
+  background: rgba(239, 68, 68, 0.15);
+  color: $color-error;
+  font-weight: $font-weight-medium;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
+.pendingObs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $spacing-xs;
+  margin-top: $spacing-xs;
+}
+
+.obsTag {
+  padding: 4rpx $spacing-sm;
+  border-radius: $radius-xs;
+  font-size: $font-size-xs;
+  background: $color-tag-bg;
+  color: $color-tag-text;
+}
+
+.pendingSymptoms {
+  font-size: $font-size-sm;
+  color: $color-text-secondary;
+  margin-top: $spacing-sm;
+  line-height: 1.5;
+}

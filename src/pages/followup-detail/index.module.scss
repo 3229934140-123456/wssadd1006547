@@ -14,6 +14,24 @@
   gap: $spacing-md;
 }
 
+.todayBanner {
+  background: $color-primary;
+  padding: $spacing-md $page-padding;
+  text-align: center;
+}
+
+.todayText {
+  color: $color-text-white;
+  font-size: $font-size-md;
+  font-weight: $font-weight-medium;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
 .alertIcon {
   width: 56rpx;
   height: 56rpx;
@@ -324,6 +342,11 @@
   &.disabled {
     background: $color-text-disabled;
   }
+
+  &.completedBtn {
+    background: $color-text-tertiary;
+    color: $color-text-white;
+  }
 }
 
 .dateInfo {
@@ -331,4 +354,39 @@
   color: $color-text-tertiary;
   text-align: center;
   margin-bottom: $spacing-sm;
+}
+
+.completedCard {
+  background: $color-bg-card;
+  border-radius: $radius-lg;
+  padding: $spacing-lg;
+  box-shadow: $shadow-card;
+}
+
+.completedAction {
+  display: flex;
+  align-items: center;
+  gap: $spacing-md;
+  margin-bottom: $spacing-md;
+}
+
+.completedText {
+  font-size: $font-size-lg;
+  font-weight: $font-weight-semibold;
+  color: $color-primary;
+}
+
+.completedNotes {
+  font-size: $font-size-sm;
+  color: $color-text-secondary;
+  line-height: 1.6;
+  margin-bottom: $spacing-sm;
+  padding: $spacing-md;
+  background: $color-bg-soft;
+  border-radius: $radius-md;
+}
+
+.completedDate {
+  font-size: $font-size-xs;
+  color: $color-text-tertiary;
 }

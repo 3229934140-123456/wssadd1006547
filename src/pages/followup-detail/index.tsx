@@ -4,7 +4,6 @@ import Taro, { useRouter, useDidShow } from '@tarojs/taro';
 import classnames from 'classnames';
 import styles from './index.module.scss';
 import { useAppContext } from '@/store/AppContext';
-import { getFollowupById } from '@/data/mockFollowups';
 import type { DoctorAction, FollowupTask } from '@/types';
 import { formatDateCN, isToday } from '@/utils/date';
 
@@ -16,21 +15,33 @@ const actionOptions: { type: DoctorAction; name: string; desc: string; icon: str
 
 const FollowupDetailPage: React.FC = () => {
   const router = useRouter();
-  const { updateFollowupTask, updatePatient, patients } = useAppContext();
+  const {
+    patients,
+    followupTasks,
+    getFollowupById,
+    getTodoByFollowupId,
+    completeFollowup,
+    markTodoRead
+  } = useAppContext();
 
   const followupId = router.params.id as string;
   const patientId = router.params.patientId as string;
 
-  const [followup, setFollowup] = useState<FollowupTask | undefined>(undefined);
   const [selectedAction, setSelectedAction] = useState<DoctorAction | null>(null);
   const [doctorNotes, setDoctorNotes] = useState('');
 
   const patient = useMemo(() => patients.find(p => p.id === patientId), [patients, patientId]);
 
+  const followup: FollowupTask | undefined = useMemo(() => {
+    return getFollowupById(followupId);
+  }, [getFollowupById, followupId]);
+
   useDidShow(() => {
     if (followupId) {
-      const task = getFollowupById(followupId);
-      setFollowup(task);
+      const todo = getTodoByFollowupId(followupId);
+      if (todo && !todo.isRead) {
+        markTodoRead(todo.id);
+      }
       console.log('[FollowupDetail] Loaded followup:', followupId, 'patient:', patient?.name);
     }
   });
@@ -45,25 +56,12 @@ const FollowupDetailPage: React.FC = () => {
     );
   }
 
-  const canSubmit = selectedAction !== null;
+  const isCompleted = followup.status === 'completed';
 
   const handleSubmit = () => {
     if (!selectedAction) return;
 
-    updateFollowupTask(followupId, {
-      status: 'completed',
-      doctorAction: selectedAction,
-      doctorNotes,
-      completedAt: new Date().toISOString().split('T')[0]
-    });
-
-    const hasAbnormal = followup.observations.some(o => (o.value || 0) >= 5);
-    updatePatient(patientId, {
-      status: hasAbnormal ? 'abnormal' : 'normal',
-      followupCount: patient.followupCount + 1
-    });
-
-    console.log('[FollowupDetail] Completed followup for:', followup.patientName, 'action:', selectedAction);
+    completeFollowup(followupId, patientId, selectedAction, doctorNotes);
 
     Taro.showToast({
       title: '回访处理完成',
@@ -84,10 +82,16 @@ const FollowupDetailPage: React.FC = () => {
 
   return (
     <View className={styles.page}>
-      {followup.isAbnormal && (
+      {followup.isAbnormal && !isCompleted && (
         <View className={styles.alertBanner}>
           <View className={styles.alertIcon}>⚠️</View>
           <Text className={styles.alertText}>患者反馈异常，请注意重点关注</Text>
+        </View>
+      )}
+
+      {isToday(followup.scheduledDate) && !isCompleted && (
+        <View className={styles.todayBanner}>
+          <Text className={styles.todayText}>今日回访 — 请及时处理</Text>
         </View>
       )}
 
@@ -109,8 +113,8 @@ const FollowupDetailPage: React.FC = () => {
             {followup.observations.map((obs, index) => {
               const isAbnormal = (obs.value || 0) >= 5;
               return (
-                <View 
-                  key={index} 
+                <View
+                  key={index}
                   className={classnames(styles.obsItem, isAbnormal && styles.abnormal)}
                 >
                   <Text className={styles.obsName}>{obs.name}</Text>
@@ -149,9 +153,9 @@ const FollowupDetailPage: React.FC = () => {
                 <View className={styles.photosRow}>
                   {followup.patientPhotos.map((photo, index) => (
                     <View key={index} className={styles.photoItem}>
-                      <Image 
-                        className={styles.photoImg} 
-                        src={photo} 
+                      <Image
+                        className={styles.photoImg}
+                        src={photo}
                         mode="aspectFill"
                         onError={(e) => console.error('[FollowupDetail] Image load error:', e)}
                       />
@@ -164,57 +168,88 @@ const FollowupDetailPage: React.FC = () => {
         </View>
       )}
 
-      <View className={styles.actionSection}>
-        <Text className={styles.sectionTitle}>处理方式</Text>
-        <View className={styles.actionCard}>
-          <View className={styles.actionOptions}>
-            {actionOptions.map((option) => (
-              <View
-                key={option.type}
-                className={classnames(
-                  styles.actionOption,
-                  selectedAction === option.type && styles.selected
-                )}
-                onClick={() => setSelectedAction(option.type)}
-              >
-                <View className={classnames(styles.actionIcon, styles[option.type])}>
-                  {option.icon}
-                </View>
-                <View className={styles.actionInfo}>
-                  <Text className={styles.actionName}>{option.name}</Text>
-                  <Text className={styles.actionDesc}>{option.desc}</Text>
-                </View>
-                <View className={classnames(
-                  styles.checkbox,
-                  selectedAction === option.type && styles.selected
-                )}></View>
-              </View>
-            ))}
-          </View>
-
-          <View className={styles.notesInput}>
-            <Textarea
-              className={styles.textarea}
-              placeholder="输入处理备注（可选）"
-              value={doctorNotes}
-              onInput={(e) => setDoctorNotes(e.detail.value)}
-              maxlength={300}
-            />
+      {isCompleted && followup.doctorAction && (
+        <View className={styles.section}>
+          <Text className={styles.sectionTitle}>处理结果</Text>
+          <View className={styles.completedCard}>
+            <View className={styles.completedAction}>
+              {actionOptions.find(a => a.type === followup.doctorAction)?.icon}
+              <Text className={styles.completedText}>
+                {actionOptions.find(a => a.type === followup.doctorAction)?.name}
+              </Text>
+            </View>
+            {followup.doctorNotes && (
+              <Text className={styles.completedNotes}>{followup.doctorNotes}</Text>
+            )}
+            <Text className={styles.completedDate}>
+              处理时间：{followup.completedAt}
+            </Text>
           </View>
         </View>
-      </View>
+      )}
+
+      {!isCompleted && (
+        <View className={styles.actionSection}>
+          <Text className={styles.sectionTitle}>处理方式</Text>
+          <View className={styles.actionCard}>
+            <View className={styles.actionOptions}>
+              {actionOptions.map((option) => (
+                <View
+                  key={option.type}
+                  className={classnames(
+                    styles.actionOption,
+                    selectedAction === option.type && styles.selected
+                  )}
+                  onClick={() => setSelectedAction(option.type)}
+                >
+                  <View className={classnames(styles.actionIcon, styles[option.type])}>
+                    {option.icon}
+                  </View>
+                  <View className={styles.actionInfo}>
+                    <Text className={styles.actionName}>{option.name}</Text>
+                    <Text className={styles.actionDesc}>{option.desc}</Text>
+                  </View>
+                  <View className={classnames(
+                    styles.checkbox,
+                    selectedAction === option.type && styles.selected
+                  )}></View>
+                </View>
+              ))}
+            </View>
+
+            <View className={styles.notesInput}>
+              <Textarea
+                className={styles.textarea}
+                placeholder="输入处理备注（可选）"
+                value={doctorNotes}
+                onInput={(e) => setDoctorNotes(e.detail.value)}
+                maxlength={300}
+              />
+            </View>
+          </View>
+        </View>
+      )}
 
       <View className={styles.bottomBar}>
         <Text className={styles.dateInfo}>
           回访日期：{isToday(followup.scheduledDate) ? '今天' : formatDateCN(followup.scheduledDate)}
         </Text>
-        <Button
-          className={classnames(styles.submitBtn, !canSubmit && styles.disabled)}
-          onClick={handleSubmit}
-          disabled={!canSubmit}
-        >
-          确认处理
-        </Button>
+        {!isCompleted ? (
+          <Button
+            className={classnames(styles.submitBtn, !selectedAction && styles.disabled)}
+            onClick={handleSubmit}
+            disabled={!selectedAction}
+          >
+            确认处理
+          </Button>
+        ) : (
+          <Button
+            className={classnames(styles.submitBtn, styles.completedBtn)}
+            disabled
+          >
+            已处理
+          </Button>
+        )}
       </View>
     </View>
   );

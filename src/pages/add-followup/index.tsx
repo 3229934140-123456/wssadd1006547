@@ -105,7 +105,8 @@ const AddFollowupPage: React.FC = () => {
     });
 
     updatePatient(patientId, {
-      nextFollowupDate: scheduledDate
+      nextFollowupDate: scheduledDate,
+      status: isAbnormal ? 'abnormal' : patient.status
     });
 
     console.log('[AddFollowup] Created followup task for:', patientName, 'date:', scheduledDate);

@@ -1,13 +1,11 @@
-import React, { useState, useMemo } from 'react';
+import React, { useMemo } from 'react';
 import { View, Text, Button } from '@tarojs/components';
 import Taro, { useRouter, useDidShow } from '@tarojs/taro';
 import classnames from 'classnames';
 import styles from './index.module.scss';
 import Timeline from '@/components/Timeline';
 import { useAppContext } from '@/store/AppContext';
-import { getTimelineByPatientId } from '@/data/mockFollowups';
-import { getDaysAfterSurgery, formatDateCN } from '@/utils/date';
-import type { Patient, TimelineRecord } from '@/types';
+import { getDaysAfterSurgery, formatDateCN, isToday } from '@/utils/date';
 
 const statusText: Record<string, string> = {
   normal: '恢复中',
@@ -17,21 +15,29 @@ const statusText: Record<string, string> = {
 
 const PatientDetailPage: React.FC = () => {
   const router = useRouter();
-  const { patients } = useAppContext();
-  const [timelineRecords, setTimelineRecords] = useState<TimelineRecord[]>([]);
-
   const patientId = router.params.id as string;
 
-  const patient: Patient | undefined = useMemo(() => {
-    return patients.find(p => p.id === patientId);
-  }, [patients, patientId]);
+  const {
+    patients,
+    getTimelineByPatientId,
+    getFollowupsByPatientId,
+    followupTasks
+  } = useAppContext();
+
+  const patient = useMemo(() => patients.find(p => p.id === patientId), [patients, patientId]);
+
+  const timelineRecords = useMemo(() => {
+    return getTimelineByPatientId(patientId);
+  }, [getTimelineByPatientId, patientId]);
+
+  const pendingFollowups = useMemo(() => {
+    return getFollowupsByPatientId(patientId).filter(f => f.status === 'pending');
+  }, [getFollowupsByPatientId, patientId]);
 
   useDidShow(() => {
-    if (patientId) {
-      const records = getTimelineByPatientId(patientId);
-      setTimelineRecords(records);
-      console.log('[PatientDetail] Loaded patient:', patient?.name, 'timeline records:', records.length);
-    }
+    console.log('[PatientDetail] Loaded patient:', patient?.name,
+      'timeline:', timelineRecords.length,
+      'pending followups:', pendingFollowups.length);
   });
 
   if (!patient) {
@@ -49,6 +55,12 @@ const PatientDetailPage: React.FC = () => {
   const handleAddFollowup = () => {
     Taro.navigateTo({
       url: `/pages/add-followup/index?patientId=${patientId}&patientName=${encodeURIComponent(patient.name)}`
+    });
+  };
+
+  const handleFollowupClick = (followupId: string) => {
+    Taro.navigateTo({
+      url: `/pages/followup-detail/index?id=${followupId}&patientId=${patientId}`
     });
   };
 
@@ -107,16 +119,51 @@ const PatientDetailPage: React.FC = () => {
             <View className={styles.tag}>即刻负重</View>
           )}
           <View className={styles.tag}>已回访 {patient.followupCount} 次</View>
-          {patient.nextFollowupDate && (
-            <View className={styles.tag}>下次回访：{patient.nextFollowupDate}</View>
-          )}
         </View>
         {patient.notes && (
           <View className={styles.notes}>
-            <Text>📝 备注：{patient.notes}</Text>
+            <Text>备注：{patient.notes}</Text>
           </View>
         )}
       </View>
+
+      {pendingFollowups.length > 0 && (
+        <View className={styles.section}>
+          <Text className={styles.sectionTitle}>待处理回访</Text>
+          {pendingFollowups.map(followup => (
+            <View
+              key={followup.id}
+              className={classnames(styles.pendingCard, isToday(followup.scheduledDate) && styles.todayPending)}
+              onClick={() => handleFollowupClick(followup.id)}
+            >
+              <View className={styles.pendingHeader}>
+                <View className={styles.pendingInfo}>
+                  <Text className={styles.pendingDate}>
+                    {isToday(followup.scheduledDate) ? '今日' : formatDateCN(followup.scheduledDate)}回访
+                  </Text>
+                  {followup.isAbnormal && (
+                    <View className={styles.abnormalTag}>异常</View>
+                  )}
+                  {isToday(followup.scheduledDate) && (
+                    <View className={styles.todayTag}>待处理</View>
+                  )}
+                </View>
+                <Text className={styles.pendingArrow}>›</Text>
+              </View>
+              <View className={styles.pendingObs}>
+                {followup.observations.map((obs, i) => (
+                  <Text key={i} className={styles.obsTag}>
+                    {obs.name}{obs.value ? ` ${obs.value}分` : ''}
+                  </Text>
+                ))}
+              </View>
+              {followup.patientSymptoms && (
+                <Text className={styles.pendingSymptoms}>{followup.patientSymptoms}</Text>
+              )}
+            </View>
+          ))}
+        </View>
+      )}
 
       <View className={styles.section}>
         <View className={styles.sectionHeader}>
@@ -135,13 +182,13 @@ const PatientDetailPage: React.FC = () => {
       </View>
 
       <View className={styles.bottomBar}>
-        <Button 
+        <Button
           className={classnames(styles.bottomBtn, styles.outline)}
           onClick={handleCallPatient}
         >
           电话联系
         </Button>
-        <Button 
+        <Button
           className={classnames(styles.bottomBtn, styles.primary)}
           onClick={handleAddFollowup}
         >

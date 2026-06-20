@@ -8,10 +8,63 @@
   box-shadow: 0 2rpx 12rpx rgba(15, 118, 110, 0.06);
   transition: all $transition-base;
 
+  &.todayCard {
+    border: 2rpx solid $color-primary;
+    box-shadow: 0 4rpx 20rpx rgba(15, 118, 110, 0.15);
+  }
+
   &:active {
     transform: scale(0.98);
     opacity: 0.9;
   }
+}
+
+.todayBanner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: linear-gradient(135deg, rgba(15, 118, 110, 0.1) 0%, rgba(20, 184, 166, 0.08) 100%);
+  border-radius: $radius-md;
+  padding: $spacing-sm $spacing-md;
+  margin-bottom: $spacing-md;
+}
+
+.todayBannerLeft {
+  display: flex;
+  align-items: center;
+  gap: $spacing-sm;
+}
+
+.todayBannerDot {
+  color: $color-error;
+  font-size: 20rpx;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+.todayBannerText {
+  font-size: $font-size-sm;
+  color: $color-primary;
+  font-weight: $font-weight-medium;
+}
+
+.todayAbnormalTag {
+  font-size: $font-size-xs;
+  color: $color-error;
+  background: rgba(239, 68, 68, 0.1);
+  padding: 2rpx $spacing-xs;
+  border-radius: $radius-xs;
+  font-weight: $font-weight-medium;
+}
+
+.todayBannerAction {
+  font-size: $font-size-sm;
+  color: $color-primary;
+  font-weight: $font-weight-medium;
 }
 
 .header {
@@ -154,6 +207,21 @@
     color: $color-primary;
     font-weight: $font-weight-medium;
   }
+
+  .todayDate {
+    color: $color-error;
+    font-weight: $font-weight-semibold;
+  }
+}
+
+.todayFollowupTag {
+  padding: $spacing-xs $spacing-md;
+  border-radius: $radius-button;
+  font-size: $font-size-xs;
+  background: $color-primary;
+  color: $color-text-white;
+  font-weight: $font-weight-medium;
+  animation: pulse 2s infinite;
 }
 
 .followupCount {

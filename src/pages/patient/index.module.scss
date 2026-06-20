@@ -55,6 +55,11 @@
   background: rgba(239, 68, 68, 0.3);
 }
 
+.statCard.todayHighlight {
+  background: rgba(255, 255, 255, 0.35);
+  cursor: pointer;
+}
+
 .content {
   padding: 0 $page-padding;
   margin-top: -$spacing-lg;
@@ -114,6 +119,19 @@
     background: $color-error;
     color: $color-text-white;
     border-color: $color-error;
+  }
+
+  &.todayFilter {
+    background: rgba(15, 118, 110, 0.1);
+    color: $color-primary;
+    border-color: rgba(15, 118, 110, 0.3);
+    font-weight: $font-weight-medium;
+
+    &.active {
+      background: $color-primary;
+      color: $color-text-white;
+      border-color: $color-primary;
+    }
   }
 
   &:active {

@@ -7,44 +7,62 @@ import PatientCard from '@/components/PatientCard';
 import { useAppContext } from '@/store/AppContext';
 import { isToday } from '@/utils/date';
 
-type FilterType = 'all' | 'normal' | 'abnormal' | 'recovered';
+type FilterType = 'all' | 'normal' | 'abnormal' | 'recovered' | 'today';
 
 const PatientPage: React.FC = () => {
-  const { patients, todoItems, getUnreadTodoCount } = useAppContext();
+  const { patients, followupTasks, todoItems, getUnreadTodoCount, getTodayFollowupTasks } = useAppContext();
   const [searchText, setSearchText] = useState('');
   const [filter, setFilter] = useState<FilterType>('all');
   const [isRefreshing, setIsRefreshing] = useState(false);
 
+  const todayFollowupTasks = getTodayFollowupTasks();
+  const todayFollowupPatientIds = useMemo(() => {
+    return new Set(todayFollowupTasks.map(f => f.patientId));
+  }, [todayFollowupTasks]);
+
   const filteredPatients = useMemo(() => {
     let result = [...patients];
-    
+
     if (searchText) {
-      result = result.filter(p => 
-        p.name.includes(searchText) || 
+      result = result.filter(p =>
+        p.name.includes(searchText) ||
         p.phone.includes(searchText)
       );
     }
-    
-    if (filter !== 'all') {
-      result = result.filter(p => p.status === filter);
+
+    switch (filter) {
+      case 'today':
+        result = result.filter(p => todayFollowupPatientIds.has(p.id));
+        break;
+      case 'abnormal':
+        result = result.filter(p => p.status === 'abnormal');
+        break;
+      case 'normal':
+        result = result.filter(p => p.status === 'normal');
+        break;
+      case 'recovered':
+        result = result.filter(p => p.status === 'recovered');
+        break;
     }
-    
+
     return result.sort((a, b) => {
+      const aToday = todayFollowupPatientIds.has(a.id);
+      const bToday = todayFollowupPatientIds.has(b.id);
+      if (aToday !== bToday) return aToday ? -1 : 1;
       if (a.status === 'abnormal' && b.status !== 'abnormal') return -1;
       if (a.status !== 'abnormal' && b.status === 'abnormal') return 1;
       return new Date(b.surgeryDate).getTime() - new Date(a.surgeryDate).getTime();
     });
-  }, [patients, searchText, filter]);
+  }, [patients, searchText, filter, todayFollowupPatientIds]);
 
   const stats = useMemo(() => {
-    const todayFollowups = patients.filter(p => p.nextFollowupDate && isToday(p.nextFollowupDate)).length;
     const abnormalCount = patients.filter(p => p.status === 'abnormal').length;
     return {
       total: patients.length,
-      todayFollowups,
+      todayFollowups: todayFollowupTasks.length,
       abnormalCount
     };
-  }, [patients]);
+  }, [patients, todayFollowupTasks]);
 
   usePullDownRefresh(() => {
     setIsRefreshing(true);
@@ -55,7 +73,8 @@ const PatientPage: React.FC = () => {
   });
 
   useDidShow(() => {
-    console.log('[PatientPage] Page shown, unread todos:', getUnreadTodoCount());
+    console.log('[PatientPage] Page shown, unread todos:', getUnreadTodoCount(),
+      'today followups:', todayFollowupTasks.length);
   });
 
   const handleAddPatient = () => {
@@ -64,8 +83,9 @@ const PatientPage: React.FC = () => {
     });
   };
 
-  const filterOptions: { key: FilterType; label: string; isAbnormal?: boolean }[] = [
+  const filterOptions: { key: FilterType; label: string; isAbnormal?: boolean; isToday?: boolean; badge?: number }[] = [
     { key: 'all', label: '全部' },
+    { key: 'today', label: '今日回访', isToday: true, badge: todayFollowupTasks.length },
     { key: 'abnormal', label: '需关注', isAbnormal: true },
     { key: 'normal', label: '恢复中' },
     { key: 'recovered', label: '已康复' }
@@ -76,17 +96,31 @@ const PatientPage: React.FC = () => {
       <View className={styles.header}>
         <Text className={styles.greeting}>医生您好</Text>
         <Text className={styles.subGreeting}>今天是 {new Date().toLocaleDateString('zh-CN')}</Text>
-        
+
         <View className={styles.statsRow}>
           <View className={styles.statCard}>
             <Text className={styles.statNum}>{stats.total}</Text>
             <Text className={styles.statLabel}>总患者数</Text>
           </View>
-          <View className={styles.statCard}>
+          <View
+            className={classnames(styles.statCard, stats.todayFollowups > 0 && styles.todayHighlight)}
+            onClick={() => {
+              if (stats.todayFollowups > 0) {
+                Taro.switchTab({ url: '/pages/todo/index' });
+              }
+            }}
+          >
             <Text className={styles.statNum}>{stats.todayFollowups}</Text>
             <Text className={styles.statLabel}>今日待回访</Text>
           </View>
-          <View className={classnames(styles.statCard, styles.highlight)}>
+          <View
+            className={classnames(styles.statCard, styles.highlight)}
+            onClick={() => {
+              if (stats.abnormalCount > 0) {
+                setFilter('abnormal');
+              }
+            }}
+          >
             <Text className={styles.statNum}>{stats.abnormalCount}</Text>
             <Text className={styles.statLabel}>异常待处理</Text>
           </View>
@@ -110,11 +144,13 @@ const PatientPage: React.FC = () => {
               key={option.key}
               className={classnames(
                 styles.filterBtn,
-                filter === option.key && (option.isAbnormal ? styles.activeAbnormal : styles.active)
+                filter === option.key && (option.isAbnormal ? styles.activeAbnormal : styles.active),
+                option.isToday && option.badge > 0 && styles.todayFilter
               )}
               onClick={() => setFilter(option.key)}
             >
               {option.label}
+              {option.badge && option.badge > 0 ? `(${option.badge})` : ''}
             </Button>
           ))}
         </ScrollView>
@@ -131,7 +167,11 @@ const PatientPage: React.FC = () => {
         )}
 
         {!isRefreshing && filteredPatients.length > 0 && filteredPatients.map((patient) => (
-          <PatientCard key={patient.id} patient={patient} />
+          <PatientCard
+            key={patient.id}
+            patient={patient}
+            todayFollowup={todayFollowupTasks.find(f => f.patientId === patient.id)}
+          />
         ))}
       </View>
 
