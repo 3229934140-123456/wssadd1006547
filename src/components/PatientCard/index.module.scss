@@ -1,0 +1,162 @@
+@use '@/styles/variables.scss' as *;
+
+.card {
+  background: $color-bg-card;
+  border-radius: $radius-lg;
+  padding: $spacing-lg;
+  margin-bottom: $spacing-md;
+  box-shadow: 0 2rpx 12rpx rgba(15, 118, 110, 0.06);
+  transition: all $transition-base;
+
+  &:active {
+    transform: scale(0.98);
+    opacity: 0.9;
+  }
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: $spacing-md;
+}
+
+.patientInfo {
+  display: flex;
+  align-items: center;
+  gap: $spacing-md;
+}
+
+.avatar {
+  width: 88rpx;
+  height: 88rpx;
+  border-radius: $radius-round;
+  background: linear-gradient(135deg, $color-primary 0%, $color-primary-light 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: $color-text-white;
+  font-size: $font-size-xl;
+  font-weight: $font-weight-semibold;
+}
+
+.nameRow {
+  display: flex;
+  align-items: center;
+  gap: $spacing-sm;
+  margin-bottom: $spacing-xs;
+}
+
+.name {
+  font-size: $font-size-lg;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+}
+
+.genderAge {
+  font-size: $font-size-sm;
+  color: $color-text-secondary;
+}
+
+.basicInfo {
+  font-size: $font-size-sm;
+  color: $color-text-tertiary;
+}
+
+.statusBadge {
+  padding: $spacing-xs $spacing-sm;
+  border-radius: $radius-sm;
+  font-size: $font-size-xs;
+  font-weight: $font-weight-medium;
+
+  &.normal {
+    background: rgba(16, 185, 129, 0.1);
+    color: $color-success;
+  }
+
+  &.abnormal {
+    background: rgba(239, 68, 68, 0.1);
+    color: $color-error;
+  }
+
+  &.recovered {
+    background: rgba(59, 130, 246, 0.1);
+    color: $color-info;
+  }
+}
+
+.surgeryInfo {
+  background: $color-bg-soft;
+  border-radius: $radius-md;
+  padding: $spacing-md;
+  margin-bottom: $spacing-md;
+}
+
+.surgeryRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $spacing-sm $spacing-lg;
+  margin-bottom: $spacing-sm;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+}
+
+.surgeryItem {
+  display: flex;
+  align-items: center;
+  gap: $spacing-xs;
+  font-size: $font-size-sm;
+  color: $color-text-secondary;
+}
+
+.itemLabel {
+  color: $color-text-tertiary;
+}
+
+.itemValue {
+  color: $color-text-primary;
+  font-weight: $font-weight-medium;
+}
+
+.tag {
+  padding: 4rpx $spacing-xs;
+  border-radius: $radius-xs;
+  font-size: $font-size-xs;
+  background: $color-tag-bg;
+  color: $color-tag-text;
+}
+
+.footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: $spacing-md;
+  border-top: 1rpx solid $color-divider;
+}
+
+.daysInfo {
+  font-size: $font-size-sm;
+  color: $color-text-secondary;
+}
+
+.daysNum {
+  color: $color-primary;
+  font-weight: $font-weight-semibold;
+}
+
+.nextFollowup {
+  font-size: $font-size-sm;
+  color: $color-text-tertiary;
+
+  .date {
+    color: $color-primary;
+    font-weight: $font-weight-medium;
+  }
+}
+
+.followupCount {
+  font-size: $font-size-xs;
+  color: $color-text-tertiary;
+}

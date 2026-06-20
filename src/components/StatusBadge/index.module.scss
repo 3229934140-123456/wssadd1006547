@@ -1,0 +1,63 @@
+@use '@/styles/variables.scss' as *;
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: $spacing-xs $spacing-sm;
+  border-radius: $radius-sm;
+  font-size: $font-size-xs;
+  font-weight: $font-weight-medium;
+  white-space: nowrap;
+
+  &.success {
+    background: rgba(16, 185, 129, 0.1);
+    color: $color-success;
+  }
+
+  &.warning {
+    background: rgba(245, 158, 11, 0.1);
+    color: $color-warning;
+  }
+
+  &.error {
+    background: rgba(239, 68, 68, 0.1);
+    color: $color-error;
+  }
+
+  &.info {
+    background: rgba(59, 130, 246, 0.1);
+    color: $color-info;
+  }
+
+  &.primary {
+    background: rgba(15, 118, 110, 0.1);
+    color: $color-primary;
+  }
+
+  &.high {
+    background: rgba(220, 38, 38, 0.15);
+    color: $color-abnormal;
+    font-weight: $font-weight-semibold;
+  }
+
+  &.medium {
+    background: rgba(245, 158, 11, 0.15);
+    color: $color-warning;
+  }
+
+  &.low {
+    background: rgba(148, 163, 184, 0.15);
+    color: $color-text-tertiary;
+  }
+
+  &.dot::before {
+    content: '';
+    display: inline-block;
+    width: 12rpx;
+    height: 12rpx;
+    border-radius: $radius-round;
+    margin-right: $spacing-xs;
+    background: currentColor;
+  }
+}

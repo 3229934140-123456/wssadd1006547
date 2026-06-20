@@ -1,0 +1,334 @@
+@use '@/styles/variables.scss' as *;
+
+.page {
+  min-height: 100vh;
+  background: $color-bg-page;
+  padding-bottom: 200rpx;
+}
+
+.alertBanner {
+  background: linear-gradient(135deg, $color-error 0%, #F97316 100%);
+  padding: $spacing-lg $page-padding;
+  display: flex;
+  align-items: center;
+  gap: $spacing-md;
+}
+
+.alertIcon {
+  width: 56rpx;
+  height: 56rpx;
+  border-radius: $radius-round;
+  background: rgba(255, 255, 255, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 32rpx;
+}
+
+.alertText {
+  flex: 1;
+  color: $color-text-white;
+  font-size: $font-size-md;
+  font-weight: $font-weight-medium;
+}
+
+.patientCard {
+  margin: $spacing-lg $page-padding;
+  background: $color-bg-card;
+  border-radius: $radius-lg;
+  padding: $spacing-lg;
+  box-shadow: $shadow-card;
+  display: flex;
+  align-items: center;
+  gap: $spacing-md;
+}
+
+.avatar {
+  width: 96rpx;
+  height: 96rpx;
+  border-radius: $radius-round;
+  background: linear-gradient(135deg, $color-primary 0%, $color-primary-light 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: $color-text-white;
+  font-size: 40rpx;
+  font-weight: $font-weight-semibold;
+}
+
+.patientInfo {
+  flex: 1;
+}
+
+.patientName {
+  font-size: $font-size-lg;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+  margin-bottom: $spacing-xs;
+}
+
+.patientMeta {
+  font-size: $font-size-sm;
+  color: $color-text-secondary;
+}
+
+.section {
+  margin: 0 $page-padding;
+  margin-bottom: $spacing-lg;
+}
+
+.sectionTitle {
+  font-size: $font-size-lg;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+  margin-bottom: $spacing-md;
+}
+
+.observationsCard {
+  background: $color-bg-card;
+  border-radius: $radius-lg;
+  padding: $spacing-lg;
+  box-shadow: $shadow-card;
+}
+
+.obsList {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-md;
+}
+
+.obsItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: $spacing-md;
+  background: $color-bg-soft;
+  border-radius: $radius-md;
+
+  &.abnormal {
+    background: rgba(239, 68, 68, 0.08);
+  }
+}
+
+.obsName {
+  font-size: $font-size-md;
+  color: $color-text-primary;
+}
+
+.obsScore {
+  display: flex;
+  align-items: center;
+  gap: $spacing-sm;
+}
+
+.scoreValue {
+  font-size: $font-size-xxl;
+  font-weight: $font-weight-bold;
+  color: $color-primary;
+
+  &.high {
+    color: $color-error;
+  }
+}
+
+.scoreLabel {
+  font-size: $font-size-sm;
+  color: $color-text-tertiary;
+}
+
+.symptomsCard {
+  background: $color-bg-card;
+  border-radius: $radius-lg;
+  padding: $spacing-lg;
+  box-shadow: $shadow-card;
+}
+
+.symptomsTitle {
+  font-size: $font-size-md;
+  font-weight: $font-weight-medium;
+  color: $color-text-primary;
+  margin-bottom: $spacing-sm;
+}
+
+.symptomsText {
+  font-size: $font-size-md;
+  color: $color-text-secondary;
+  line-height: 1.6;
+}
+
+.photosSection {
+  margin-top: $spacing-md;
+}
+
+.photosRow {
+  display: flex;
+  gap: $spacing-sm;
+  overflow-x: auto;
+  padding-bottom: $spacing-xs;
+}
+
+.photoItem {
+  width: 200rpx;
+  height: 200rpx;
+  border-radius: $radius-md;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.photoImg {
+  width: 100%;
+  height: 100%;
+}
+
+.actionSection {
+  margin: $spacing-lg $page-padding;
+}
+
+.actionCard {
+  background: $color-bg-card;
+  border-radius: $radius-lg;
+  padding: $spacing-lg;
+  box-shadow: $shadow-card;
+}
+
+.actionOptions {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-md;
+}
+
+.actionOption {
+  display: flex;
+  align-items: center;
+  padding: $spacing-lg;
+  border: 2rpx solid $color-border;
+  border-radius: $radius-md;
+  transition: all $transition-base;
+
+  &.selected {
+    border-color: $color-primary;
+    background: $color-bg-soft;
+  }
+
+  &:active {
+    opacity: 0.9;
+    transform: scale(0.99);
+  }
+}
+
+.actionIcon {
+  width: 72rpx;
+  height: 72rpx;
+  border-radius: $radius-round;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 36rpx;
+  margin-right: $spacing-md;
+
+  &.call {
+    background: rgba(16, 185, 129, 0.1);
+  }
+
+  &.nurse {
+    background: rgba(59, 130, 246, 0.1);
+  }
+
+  &.revisit {
+    background: rgba(239, 68, 68, 0.1);
+  }
+}
+
+.actionInfo {
+  flex: 1;
+}
+
+.actionName {
+  font-size: $font-size-md;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+  margin-bottom: 4rpx;
+}
+
+.actionDesc {
+  font-size: $font-size-sm;
+  color: $color-text-tertiary;
+}
+
+.checkbox {
+  width: 40rpx;
+  height: 40rpx;
+  border-radius: $radius-round;
+  border: 2rpx solid $color-border;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  &.selected {
+    background: $color-primary;
+    border-color: $color-primary;
+
+    &::after {
+      content: '';
+      width: 12rpx;
+      height: 20rpx;
+      border-right: 4rpx solid $color-text-white;
+      border-bottom: 4rpx solid $color-text-white;
+      transform: rotate(45deg) translate(-2rpx, -2rpx);
+    }
+  }
+}
+
+.notesInput {
+  margin-top: $spacing-lg;
+  background: $color-bg-soft;
+  border-radius: $radius-md;
+  padding: $spacing-md;
+}
+
+.textarea {
+  width: 100%;
+  min-height: 120rpx;
+  font-size: $font-size-md;
+  color: $color-text-primary;
+  line-height: 1.6;
+}
+
+.bottomBar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: $color-bg-card;
+  padding: $spacing-md $page-padding;
+  padding-bottom: calc(#{$spacing-md} + env(safe-area-inset-bottom));
+  box-shadow: 0 -4rpx 16rpx rgba(0, 0, 0, 0.08);
+}
+
+.submitBtn {
+  @include button-reset;
+  width: 100%;
+  height: $button-height-lg;
+  border-radius: $radius-button;
+  font-size: $font-size-lg;
+  font-weight: $font-weight-semibold;
+  background: $color-primary;
+  color: $color-text-white;
+  transition: all $transition-base;
+
+  &:active {
+    opacity: 0.9;
+    transform: scale(0.99);
+  }
+
+  &.disabled {
+    background: $color-text-disabled;
+  }
+}
+
+.dateInfo {
+  font-size: $font-size-sm;
+  color: $color-text-tertiary;
+  text-align: center;
+  margin-bottom: $spacing-sm;
+}

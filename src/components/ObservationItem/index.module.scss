@@ -1,0 +1,97 @@
+@use '@/styles/variables.scss' as *;
+
+.item {
+  background: $color-bg-card;
+  border-radius: $radius-md;
+  padding: $spacing-md;
+  border: 2rpx solid $color-border;
+  transition: all $transition-base;
+
+  &.selected {
+    border-color: $color-primary;
+    background: $color-bg-soft;
+  }
+
+  &.abnormal {
+    border-color: $color-error;
+    background: rgba(239, 68, 68, 0.05);
+  }
+
+  &:active {
+    opacity: 0.9;
+  }
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: $spacing-sm;
+}
+
+.name {
+  font-size: $font-size-md;
+  font-weight: $font-weight-medium;
+  color: $color-text-primary;
+}
+
+.checkbox {
+  width: 40rpx;
+  height: 40rpx;
+  border-radius: $radius-xs;
+  border: 2rpx solid $color-border;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all $transition-base;
+
+  &.checked {
+    background: $color-primary;
+    border-color: $color-primary;
+
+    &::after {
+      content: '';
+      width: 16rpx;
+      height: 24rpx;
+      border-right: 4rpx solid $color-text-white;
+      border-bottom: 4rpx solid $color-text-white;
+      transform: rotate(45deg) translate(-2rpx, -2rpx);
+    }
+  }
+}
+
+.scoreSelector {
+  display: flex;
+  gap: $spacing-xs;
+  margin-top: $spacing-sm;
+}
+
+.scoreBtn {
+  flex: 1;
+  height: 72rpx;
+  border-radius: $radius-sm;
+  background: $color-bg-hover;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: $font-size-md;
+  font-weight: $font-weight-medium;
+  color: $color-text-secondary;
+  transition: all $transition-base;
+
+  &.active {
+    background: $color-primary;
+    color: $color-text-white;
+  }
+
+  &.activeHigh {
+    background: $color-error;
+    color: $color-text-white;
+  }
+}
+
+.description {
+  font-size: $font-size-sm;
+  color: $color-text-tertiary;
+  margin-top: $spacing-sm;
+}

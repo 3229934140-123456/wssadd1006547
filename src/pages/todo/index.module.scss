@@ -1,0 +1,226 @@
+@use '@/styles/variables.scss' as *;
+
+.page {
+  min-height: 100vh;
+  background: $color-bg-page;
+  padding-bottom: 120rpx;
+}
+
+.header {
+  background: linear-gradient(135deg, $color-error 0%, #F97316 100%);
+  padding: $spacing-xl $page-padding;
+}
+
+.title {
+  color: $color-text-white;
+  font-size: $font-size-xxl;
+  font-weight: $font-weight-bold;
+  margin-bottom: $spacing-xs;
+}
+
+.subtitle {
+  color: rgba(255, 255, 255, 0.85);
+  font-size: $font-size-sm;
+}
+
+.unreadCount {
+  display: inline-block;
+  background: $color-text-white;
+  color: $color-error;
+  padding: $spacing-xs $spacing-md;
+  border-radius: $radius-button;
+  font-weight: $font-weight-semibold;
+  margin-left: $spacing-sm;
+}
+
+.tabs {
+  display: flex;
+  background: $color-bg-card;
+  margin: 0 $page-padding;
+  margin-top: -$spacing-lg;
+  border-radius: $radius-lg;
+  padding: $spacing-xs;
+  box-shadow: $shadow-card;
+}
+
+.tabBtn {
+  @include button-reset;
+  flex: 1;
+  height: 72rpx;
+  border-radius: $radius-md;
+  font-size: $font-size-sm;
+  color: $color-text-secondary;
+  background: transparent;
+  transition: all $transition-base;
+
+  &.active {
+    background: $color-primary;
+    color: $color-text-white;
+    font-weight: $font-weight-medium;
+  }
+
+  &:active {
+    opacity: 0.9;
+  }
+}
+
+.content {
+  padding: $spacing-md $page-padding;
+}
+
+.list {
+  margin-top: $spacing-md;
+}
+
+.todoCard {
+  background: $color-bg-card;
+  border-radius: $radius-lg;
+  padding: $spacing-lg;
+  margin-bottom: $spacing-md;
+  box-shadow: 0 2rpx 12rpx rgba(239, 68, 68, 0.06);
+  border-left: 6rpx solid transparent;
+  transition: all $transition-base;
+
+  &.unread {
+    background: linear-gradient(90deg, rgba(239, 68, 68, 0.05) 0%, $color-bg-card 20%);
+    border-left-color: $color-error;
+  }
+
+  &.high {
+    border-left-color: $color-error;
+  }
+
+  &.medium {
+    border-left-color: $color-warning;
+  }
+
+  &.low {
+    border-left-color: $color-text-tertiary;
+  }
+
+  &:active {
+    transform: scale(0.99);
+    opacity: 0.9;
+  }
+}
+
+.cardHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: $spacing-md;
+}
+
+.patientInfo {
+  flex: 1;
+}
+
+.patientName {
+  font-size: $font-size-lg;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+  margin-bottom: $spacing-xs;
+}
+
+.todoTitle {
+  font-size: $font-size-md;
+  color: $color-text-secondary;
+  margin-bottom: $spacing-sm;
+}
+
+.priorityBadge {
+  padding: $spacing-xs $spacing-sm;
+  border-radius: $radius-xs;
+  font-size: $font-size-xs;
+  font-weight: $font-weight-medium;
+
+  &.high {
+    background: rgba(239, 68, 68, 0.1);
+    color: $color-error;
+  }
+
+  &.medium {
+    background: rgba(245, 158, 11, 0.1);
+    color: $color-warning;
+  }
+
+  &.low {
+    background: rgba(148, 163, 184, 0.1);
+    color: $color-text-tertiary;
+  }
+}
+
+.typeTag {
+  display: inline-block;
+  padding: 4rpx $spacing-sm;
+  border-radius: $radius-xs;
+  font-size: $font-size-xs;
+  background: rgba(15, 118, 110, 0.1);
+  color: $color-primary;
+  margin-right: $spacing-sm;
+}
+
+.description {
+  font-size: $font-size-sm;
+  color: $color-text-secondary;
+  line-height: 1.6;
+  margin-bottom: $spacing-md;
+}
+
+.cardFooter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: $spacing-md;
+  border-top: 1rpx solid $color-divider;
+}
+
+.dateInfo {
+  font-size: $font-size-sm;
+  color: $color-text-tertiary;
+}
+
+.actionBtn {
+  @include button-reset;
+  height: $button-height-sm;
+  padding: 0 $spacing-lg;
+  border-radius: $radius-button;
+  font-size: $font-size-sm;
+  background: $color-primary;
+  color: $color-text-white;
+  transition: all $transition-base;
+
+  &:active {
+    opacity: 0.9;
+    transform: scale(0.98);
+  }
+}
+
+.emptyState {
+  text-align: center;
+  padding: $spacing-xl * 3 0;
+}
+
+.emptyIcon {
+  font-size: 140rpx;
+  color: $color-text-disabled;
+  margin-bottom: $spacing-lg;
+}
+
+.emptyTitle {
+  font-size: $font-size-lg;
+  color: $color-text-secondary;
+  margin-bottom: $spacing-xs;
+}
+
+.emptyDesc {
+  font-size: $font-size-sm;
+  color: $color-text-tertiary;
+}
+
+.listLoading {
+  text-align: center;
+  padding: $spacing-xl;
+  color: $color-text-tertiary;
+  font-size: $font-size-sm;
+}

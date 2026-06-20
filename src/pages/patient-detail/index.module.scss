@@ -1,0 +1,229 @@
+@use '@/styles/variables.scss' as *;
+
+.page {
+  min-height: 100vh;
+  background: $color-bg-page;
+  padding-bottom: 140rpx;
+}
+
+.header {
+  background: linear-gradient(135deg, $color-primary 0%, $color-primary-light 100%);
+  padding: $spacing-xl $page-padding;
+  padding-bottom: $spacing-xl * 2;
+}
+
+.basicInfo {
+  display: flex;
+  align-items: center;
+  gap: $spacing-lg;
+}
+
+.avatar {
+  width: 120rpx;
+  height: 120rpx;
+  border-radius: $radius-round;
+  background: rgba(255, 255, 255, 0.2);
+  border: 4rpx solid rgba(255, 255, 255, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: $color-text-white;
+  font-size: 48rpx;
+  font-weight: $font-weight-semibold;
+}
+
+.info {
+  flex: 1;
+}
+
+.nameRow {
+  display: flex;
+  align-items: center;
+  gap: $spacing-sm;
+  margin-bottom: $spacing-xs;
+}
+
+.name {
+  color: $color-text-white;
+  font-size: $font-size-xxl;
+  font-weight: $font-weight-bold;
+}
+
+.genderAge {
+  color: rgba(255, 255, 255, 0.85);
+  font-size: $font-size-md;
+}
+
+.phone {
+  color: rgba(255, 255, 255, 0.8);
+  font-size: $font-size-sm;
+  margin-bottom: $spacing-sm;
+}
+
+.statusBadge {
+  display: inline-block;
+  padding: $spacing-xs $spacing-md;
+  border-radius: $radius-button;
+  font-size: $font-size-xs;
+  font-weight: $font-weight-medium;
+
+  &.normal {
+    background: rgba(16, 185, 129, 0.2);
+    color: $color-success;
+  }
+
+  &.abnormal {
+    background: rgba(239, 68, 68, 0.2);
+    color: $color-error;
+  }
+
+  &.recovered {
+    background: rgba(59, 130, 246, 0.2);
+    color: $color-info;
+  }
+}
+
+.surgeryCard {
+  margin: 0 $page-padding;
+  margin-top: -$spacing-xl;
+  background: $color-bg-card;
+  border-radius: $radius-lg;
+  padding: $spacing-lg;
+  box-shadow: $shadow-card;
+}
+
+.cardTitle {
+  font-size: $font-size-lg;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+  margin-bottom: $spacing-md;
+}
+
+.infoGrid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $spacing-md;
+}
+
+.infoItem {
+  flex: 1;
+  min-width: 45%;
+}
+
+.infoLabel {
+  font-size: $font-size-sm;
+  color: $color-text-tertiary;
+  margin-bottom: $spacing-xs;
+}
+
+.infoValue {
+  font-size: $font-size-md;
+  color: $color-text-primary;
+  font-weight: $font-weight-medium;
+}
+
+.tagsRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $spacing-sm;
+  margin-top: $spacing-md;
+  padding-top: $spacing-md;
+  border-top: 1rpx solid $color-divider;
+}
+
+.tag {
+  padding: $spacing-xs $spacing-sm;
+  border-radius: $radius-xs;
+  font-size: $font-size-xs;
+  background: $color-tag-bg;
+  color: $color-tag-text;
+}
+
+.section {
+  margin: $spacing-lg $page-padding;
+}
+
+.sectionHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: $spacing-md;
+}
+
+.sectionTitle {
+  font-size: $font-size-lg;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+}
+
+.addBtn {
+  @include button-reset;
+  height: $button-height-sm;
+  padding: 0 $spacing-md;
+  border-radius: $radius-button;
+  font-size: $font-size-sm;
+  background: $color-primary;
+  color: $color-text-white;
+  transition: all $transition-base;
+
+  &:active {
+    opacity: 0.9;
+    transform: scale(0.98);
+  }
+}
+
+.bottomBar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: $color-bg-card;
+  padding: $spacing-md $page-padding;
+  padding-bottom: calc(#{$spacing-md} + env(safe-area-inset-bottom));
+  box-shadow: 0 -4rpx 16rpx rgba(0, 0, 0, 0.08);
+  display: flex;
+  gap: $spacing-md;
+}
+
+.bottomBtn {
+  @include button-reset;
+  flex: 1;
+  height: $button-height-lg;
+  border-radius: $radius-button;
+  font-size: $font-size-md;
+  font-weight: $font-weight-medium;
+  transition: all $transition-base;
+
+  &.primary {
+    background: $color-primary;
+    color: $color-text-white;
+  }
+
+  &.outline {
+    background: transparent;
+    color: $color-primary;
+    border: 2rpx solid $color-primary;
+  }
+
+  &:active {
+    opacity: 0.9;
+    transform: scale(0.98);
+  }
+}
+
+.notes {
+  background: $color-bg-soft;
+  border-radius: $radius-md;
+  padding: $spacing-md;
+  margin-top: $spacing-md;
+  font-size: $font-size-sm;
+  color: $color-text-secondary;
+  line-height: 1.6;
+}
+
+.emptyTimeline {
+  text-align: center;
+  padding: $spacing-xl * 2 0;
+  color: $color-text-tertiary;
+  font-size: $font-size-sm;
+}

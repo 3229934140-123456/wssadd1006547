@@ -1,0 +1,77 @@
+@use '@/styles/variables.scss' as *;
+
+.button {
+  @include button-reset;
+  height: $button-height-md;
+  border-radius: $radius-button;
+  padding: 0 $spacing-lg;
+  font-size: $font-size-md;
+  font-weight: $font-weight-medium;
+  transition: all $transition-base;
+  min-width: 160rpx;
+
+  &:active {
+    opacity: 0.9;
+    transform: scale(0.98);
+  }
+
+  &.primary {
+    background: $color-primary;
+    color: $color-text-white;
+    border: 2rpx solid $color-primary;
+  }
+
+  &.success {
+    background: $color-success;
+    color: $color-text-white;
+    border: 2rpx solid $color-success;
+  }
+
+  &.warning {
+    background: $color-warning;
+    color: $color-text-white;
+    border: 2rpx solid $color-warning;
+  }
+
+  &.error {
+    background: $color-error;
+    color: $color-text-white;
+    border: 2rpx solid $color-error;
+  }
+
+  &.outline {
+    background: transparent;
+    color: $color-primary;
+    border: 2rpx solid $color-primary;
+  }
+
+  &.outlineError {
+    background: transparent;
+    color: $color-error;
+    border: 2rpx solid $color-error;
+  }
+
+  &.large {
+    height: $button-height-lg;
+    font-size: $font-size-lg;
+    padding: 0 $spacing-xl;
+  }
+
+  &.small {
+    height: $button-height-sm;
+    font-size: $font-size-sm;
+    padding: 0 $spacing-md;
+    min-width: 120rpx;
+  }
+
+  &.block {
+    width: 100%;
+  }
+
+  &.disabled {
+    background: $color-text-disabled;
+    color: $color-text-white;
+    border-color: $color-text-disabled;
+    opacity: 0.6;
+  }
+}
