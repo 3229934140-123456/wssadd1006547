@@ -318,3 +318,277 @@
     color: $color-error;
   }
 }
+
+.headerTop {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: $spacing-md;
+}
+
+.navBtns {
+  display: flex;
+  align-items: center;
+  gap: $spacing-xs;
+}
+
+.navBtn {
+  width: 56rpx;
+  height: 56rpx;
+  padding: 0;
+  line-height: 56rpx;
+  text-align: center;
+  font-size: 36rpx;
+  color: $color-text-white;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: $radius-xs;
+  border: none;
+  font-weight: $font-weight-bold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  &:active {
+    opacity: 0.7;
+  }
+}
+
+.cursorLabel {
+  font-size: $font-size-xs;
+  color: $color-text-white;
+  font-weight: $font-weight-semibold;
+  min-width: 200rpx;
+  text-align: center;
+}
+
+.viewSwitcher {
+  display: flex;
+  margin-top: $spacing-md;
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: $radius-button;
+  padding: 4rpx;
+}
+
+.viewBtn {
+  flex: 1;
+  height: 64rpx;
+  line-height: 64rpx;
+  font-size: $font-size-sm;
+  color: rgba(255, 255, 255, 0.8);
+  background: transparent;
+  border: none;
+  border-radius: $radius-button;
+  font-weight: $font-weight-medium;
+  transition: all $transition-base;
+
+  &.viewActive {
+    background: $color-text-white;
+    color: $color-primary;
+    font-weight: $font-weight-semibold;
+    box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.08);
+  }
+}
+
+.gridView {
+  padding: $spacing-lg $page-padding;
+  margin-top: -$spacing-md;
+}
+
+.weekRow {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 8rpx;
+  background: $color-bg-card;
+  border-radius: $radius-lg;
+  padding: $spacing-md;
+  box-shadow: $shadow-card;
+  margin-bottom: $spacing-md;
+}
+
+.weekCell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: $spacing-sm 4rpx;
+  border-radius: $radius-md;
+  transition: all $transition-base;
+  min-height: 120rpx;
+
+  &.cellToday {
+    background: linear-gradient(135deg, rgba(15, 118, 110, 0.15) 0%, rgba(15, 118, 110, 0.05) 100%);
+    border: 2rpx solid rgba(15, 118, 110, 0.3);
+  }
+
+  &.cellOverdue {
+    background: linear-gradient(135deg, rgba(180, 83, 9, 0.12) 0%, rgba(180, 83, 9, 0.04) 100%);
+    border: 2rpx solid rgba(180, 83, 9, 0.25);
+  }
+
+  &.cellExpanded {
+    background: rgba(15, 118, 110, 0.15);
+    transform: scale(1.03);
+  }
+
+  &:active {
+    opacity: 0.85;
+  }
+}
+
+.cellWeekday {
+  font-size: 20rpx;
+  color: $color-text-tertiary;
+  margin-bottom: 4rpx;
+
+  .cellToday & {
+    color: $color-primary;
+    font-weight: $font-weight-semibold;
+  }
+}
+
+.cellDate {
+  font-size: $font-size-sm;
+  color: $color-text-primary;
+  font-weight: $font-weight-medium;
+  margin-bottom: 8rpx;
+
+  .cellToday & {
+    color: $color-primary;
+    font-weight: $font-weight-bold;
+  }
+
+  .cellOverdue & {
+    color: #B45309;
+  }
+}
+
+.cellBadges {
+  display: flex;
+  gap: 4rpx;
+}
+
+.cellBadge {
+  min-width: 32rpx;
+  height: 32rpx;
+  line-height: 32rpx;
+  font-size: 18rpx;
+  padding: 0 8rpx;
+  border-radius: 16rpx;
+  color: $color-text-white;
+  text-align: center;
+  font-weight: $font-weight-semibold;
+
+  &.cellOverdueBadge {
+    background: #B45309;
+  }
+
+  &.cellAbnormalBadge {
+    background: $color-error;
+  }
+
+  &.cellCountBadge {
+    background: rgba(15, 118, 110, 0.7);
+  }
+}
+
+.expandedDetail {
+  background: $color-bg-card;
+  border-radius: $radius-lg;
+  box-shadow: $shadow-card;
+  overflow: hidden;
+}
+
+.detailHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: $spacing-md $spacing-lg;
+  background: $color-bg-soft;
+  border-bottom: 1rpx solid $color-divider;
+}
+
+.detailDate {
+  font-size: $font-size-md;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+}
+
+.detailStats {
+  display: flex;
+  gap: $spacing-xs;
+}
+
+.emptyDay {
+  padding: $spacing-xl * 2;
+  text-align: center;
+}
+
+.emptyDayDate {
+  font-size: $font-size-md;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+  display: block;
+  margin-bottom: $spacing-sm;
+}
+
+.emptyDayText {
+  font-size: $font-size-sm;
+  color: $color-text-tertiary;
+}
+
+.weekdayHeader {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  background: $color-bg-card;
+  border-radius: $radius-lg $radius-lg 0 0;
+  padding: $spacing-md $spacing-md $spacing-xs;
+  box-shadow: $shadow-card;
+}
+
+.weekdayLabel {
+  text-align: center;
+  font-size: 22rpx;
+  color: $color-text-secondary;
+  font-weight: $font-weight-medium;
+}
+
+.monthGrid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2rpx;
+  background: $color-divider;
+  padding: 2rpx;
+  border-radius: 0 0 $radius-lg $radius-lg;
+  box-shadow: $shadow-card;
+  margin-bottom: $spacing-md;
+}
+
+.monthCell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: $spacing-xs 4rpx;
+  background: $color-bg-card;
+  min-height: 100rpx;
+  transition: all $transition-base;
+
+  &.cellToday {
+    background: linear-gradient(135deg, rgba(15, 118, 110, 0.12) 0%, rgba(15, 118, 110, 0.04) 100%);
+  }
+
+  &.cellOverdue {
+    background: linear-gradient(135deg, rgba(180, 83, 9, 0.12) 0%, rgba(180, 83, 9, 0.04) 100%);
+  }
+
+  &.cellExpanded {
+    background: rgba(15, 118, 110, 0.18);
+  }
+
+  &:active {
+    opacity: 0.8;
+  }
+}
+
+.monthCellEmpty {
+  background: $color-bg-card;
+  min-height: 100rpx;
+}

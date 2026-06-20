@@ -172,6 +172,28 @@
   }
 }
 
+.btnGroup {
+  display: flex;
+  gap: $spacing-sm;
+}
+
+.planBtn {
+  @include button-reset;
+  height: $button-height-sm;
+  padding: 0 $spacing-md;
+  border-radius: $radius-button;
+  font-size: $font-size-sm;
+  background: rgba(15, 118, 110, 0.1);
+  color: $color-primary;
+  font-weight: $font-weight-medium;
+  transition: all $transition-base;
+
+  &:active {
+    opacity: 0.9;
+    transform: scale(0.98);
+  }
+}
+
 .bottomBar {
   position: fixed;
   bottom: 0;
@@ -197,6 +219,12 @@
   &.primary {
     background: $color-primary;
     color: $color-text-white;
+  }
+
+  &.secondary {
+    background: rgba(15, 118, 110, 0.1);
+    color: $color-primary;
+    font-weight: $font-weight-semibold;
   }
 
   &.outline {
@@ -247,6 +275,34 @@
   border-left-color: $color-error;
   border: 2rpx solid rgba(239, 68, 68, 0.3);
   box-shadow: 0 4rpx 20rpx rgba(239, 68, 68, 0.12);
+}
+
+.overduePending {
+  border-left-color: #B45309;
+  border: 2rpx solid rgba(180, 83, 9, 0.35);
+  background: linear-gradient(90deg, rgba(180, 83, 9, 0.06) 0%, $color-bg-card 30%);
+  box-shadow: 0 4rpx 20rpx rgba(180, 83, 9, 0.12);
+}
+
+.overdueText {
+  color: #B45309;
+  font-weight: $font-weight-semibold;
+}
+
+.overdueTag {
+  padding: 4rpx $spacing-sm;
+  border-radius: $radius-xs;
+  font-size: $font-size-xs;
+  background: rgba(180, 83, 9, 0.2);
+  color: #B45309;
+  font-weight: $font-weight-semibold;
+  animation: pulse 1.5s infinite;
+}
+
+.highScoreObs {
+  background: rgba(239, 68, 68, 0.1);
+  color: $color-error;
+  font-weight: $font-weight-medium;
 }
 
 .pendingHeader {
@@ -317,4 +373,171 @@
   color: $color-text-secondary;
   margin-top: $spacing-sm;
   line-height: 1.5;
+}
+
+.revisitBanner {
+  display: flex;
+  align-items: center;
+  gap: $spacing-md;
+  margin: $spacing-md $page-padding;
+  padding: $spacing-md $spacing-lg;
+  background: linear-gradient(135deg, rgba(124, 58, 237, 0.12) 0%, rgba(124, 58, 237, 0.04) 100%);
+  border: 2rpx solid rgba(124, 58, 237, 0.25);
+  border-radius: $radius-lg;
+  transition: all $transition-base;
+
+  &:active {
+    transform: scale(0.99);
+    opacity: 0.9;
+  }
+}
+
+.revisitIcon {
+  font-size: 48rpx;
+  flex-shrink: 0;
+}
+
+.revisitContent {
+  flex: 1;
+}
+
+.revisitTitle {
+  font-size: $font-size-md;
+  font-weight: $font-weight-semibold;
+  color: #5B21B6;
+  display: block;
+  margin-bottom: $spacing-xs;
+}
+
+.revisitDesc {
+  font-size: $font-size-xs;
+  color: $color-text-secondary;
+  display: block;
+  line-height: 1.5;
+}
+
+.revisitOverdue {
+  color: #B45309;
+  font-weight: $font-weight-semibold;
+}
+
+.revisitAction {
+  font-size: $font-size-sm;
+  color: #7C3AED;
+  font-weight: $font-weight-medium;
+  white-space: nowrap;
+}
+
+.modalMask {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: flex-end;
+  z-index: 999;
+}
+
+.modalContent {
+  width: 100%;
+  background: $color-bg-card;
+  border-top-left-radius: $radius-xl;
+  border-top-right-radius: $radius-xl;
+  padding: $spacing-xl $page-padding;
+  padding-bottom: calc(#{$spacing-xl} + env(safe-area-inset-bottom));
+  max-height: 80vh;
+  overflow-y: auto;
+}
+
+.modalTitle {
+  font-size: $font-size-xl;
+  font-weight: $font-weight-bold;
+  color: $color-text-primary;
+  display: block;
+  margin-bottom: $spacing-xs;
+}
+
+.modalDesc {
+  font-size: $font-size-sm;
+  color: $color-text-tertiary;
+  display: block;
+  margin-bottom: $spacing-lg;
+}
+
+.templateItem {
+  background: $color-bg-soft;
+  border-radius: $radius-lg;
+  padding: $spacing-lg;
+  margin-bottom: $spacing-md;
+  border: 2rpx solid transparent;
+  transition: all $transition-base;
+
+  &:active {
+    background: rgba(15, 118, 110, 0.06);
+    border-color: rgba(15, 118, 110, 0.2);
+    transform: scale(0.99);
+  }
+}
+
+.templateHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: $spacing-sm;
+}
+
+.templateName {
+  font-size: $font-size-md;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+}
+
+.templateCount {
+  font-size: $font-size-xs;
+  color: $color-primary;
+  background: rgba(15, 118, 110, 0.1);
+  padding: 4rpx $spacing-sm;
+  border-radius: $radius-xs;
+  font-weight: $font-weight-medium;
+}
+
+.templateDesc {
+  font-size: $font-size-xs;
+  color: $color-text-secondary;
+  line-height: 1.5;
+  display: block;
+  margin-bottom: $spacing-sm;
+}
+
+.templatePlans {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $spacing-xs;
+}
+
+.planChip {
+  padding: $spacing-xs $spacing-sm;
+  border-radius: $radius-xs;
+  font-size: $font-size-xs;
+  background: $color-bg-card;
+  color: $color-text-secondary;
+  border: 1rpx solid $color-border;
+}
+
+.modalCancel {
+  @include button-reset;
+  width: 100%;
+  height: $button-height-lg;
+  border-radius: $radius-button;
+  background: $color-bg-soft;
+  color: $color-text-secondary;
+  font-size: $font-size-md;
+  font-weight: $font-weight-medium;
+  margin-top: $spacing-md;
+
+  &:active {
+    opacity: 0.8;
+  }
 }

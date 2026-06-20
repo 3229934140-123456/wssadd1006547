@@ -5,25 +5,27 @@ import classnames from 'classnames';
 import styles from './index.module.scss';
 import type { TimelineRecord } from '@/types';
 import { formatDateCN, isToday, isOverdue, getDaysDiff } from '@/utils/date';
+import { HIGH_SCORE_THRESHOLD } from '@/store/AppContext';
 
 interface TimelineProps {
   records: TimelineRecord[];
   patientId?: string;
 }
 
-type FilterType = 'all' | 'surgery' | 'pendingFollowup' | 'followup' | 'abnormal';
+type FilterType = 'all' | 'surgery' | 'pendingFollowup' | 'followup' | 'abnormal' | 'revisit';
 
 const actionText: Record<string, string> = {
-  call: '医生电话回访',
-  nurse: '护士代办',
-  revisit: '建议复诊'
+  call: '📞 医生电话回访',
+  nurse: '👩‍⚕️ 护士代办',
+  revisit: '🏥 建议复诊'
 };
 
 const typeText: Record<string, string> = {
   surgery: '手术',
   followup: '已回访',
   pendingFollowup: '待回访',
-  note: '备注'
+  note: '备注',
+  revisit: '复诊'
 };
 
 const filters: { key: FilterType; label: string }[] = [
@@ -31,7 +33,8 @@ const filters: { key: FilterType; label: string }[] = [
   { key: 'surgery', label: '手术' },
   { key: 'pendingFollowup', label: '待回访' },
   { key: 'followup', label: '已回访' },
-  { key: 'abnormal', label: '异常沟通' }
+  { key: 'abnormal', label: '异常沟通' },
+  { key: 'revisit', label: '复诊' }
 ];
 
 const Timeline: React.FC<TimelineProps> = ({ records, patientId }) => {
@@ -51,7 +54,10 @@ const Timeline: React.FC<TimelineProps> = ({ records, patientId }) => {
         result = result.filter(r => r.type === 'followup');
         break;
       case 'abnormal':
-        result = result.filter(r => r.isAbnormal);
+        result = result.filter(r => r.type === 'followup' && r.isAbnormal);
+        break;
+      case 'revisit':
+        result = result.filter(r => r.type === 'revisit');
         break;
     }
 
@@ -62,9 +68,10 @@ const Timeline: React.FC<TimelineProps> = ({ records, patientId }) => {
     });
   }, [records, activeFilter]);
 
-  const isHighValue = (obs: { value?: number }) => {
+  const isHighValue = (obs: { value?: number; threshold?: number }) => {
     if (obs.value === undefined) return false;
-    return obs.value >= 5;
+    const threshold = obs.threshold ?? HIGH_SCORE_THRESHOLD;
+    return obs.value >= threshold;
   };
 
   const handlePendingClick = (record: TimelineRecord) => {
@@ -107,26 +114,34 @@ const Timeline: React.FC<TimelineProps> = ({ records, patientId }) => {
             ? getDaysDiff(record.date, new Date().toISOString().split('T')[0])
             : 0;
 
+          const highScoreObs = (record.highScoreObservations && record.highScoreObservations.length > 0)
+            ? record.highScoreObservations
+            : (record.observations || []).filter(o => isHighValue(o));
+
           return (
             <View
               key={record.id}
               className={classnames(
                 styles.item,
-                record.type === 'pendingFollowup' && styles.pendingItem
+                record.type === 'pendingFollowup' && styles.pendingItem,
+                record.type === 'revisit' && styles.revisitItem,
+                record.type === 'followup' && record.isAbnormal && styles.abnormalFollowupItem
               )}
               onClick={() => handlePendingClick(record)}
             >
               <View className={classnames(
                 styles.node,
-                record.isAbnormal
-                  ? styles.abnormal
-                  : record.type === 'surgery'
-                    ? styles.surgery
-                    : record.type === 'pendingFollowup'
-                      ? isPendingOverdue
-                        ? styles.overdue
-                        : styles.pending
-                      : styles.normal
+                record.type === 'revisit'
+                  ? styles.revisit
+                  : record.isAbnormal && record.type !== 'pendingFollowup'
+                    ? styles.abnormal
+                    : record.type === 'surgery'
+                      ? styles.surgery
+                      : record.type === 'pendingFollowup'
+                        ? isPendingOverdue
+                          ? styles.overdue
+                          : styles.pending
+                        : styles.normal
               )}>
                 <View className={styles.dot}></View>
               </View>
@@ -134,7 +149,8 @@ const Timeline: React.FC<TimelineProps> = ({ records, patientId }) => {
               <View className={classnames(
                 styles.content,
                 record.type === 'pendingFollowup' && styles.pendingContent,
-                isPendingOverdue && styles.overdueContent
+                isPendingOverdue && styles.overdueContent,
+                record.type === 'revisit' && styles.revisitContent
               )}>
                 <View className={styles.header}>
                   <Text className={classnames(
@@ -160,15 +176,52 @@ const Timeline: React.FC<TimelineProps> = ({ records, patientId }) => {
 
                 <View className={styles.title}>
                   {record.title}
-                  {record.isAbnormal && (
-                    <Text className={styles.abnormalBadge}>异常</Text>
+                  {record.type === 'followup' && record.isAbnormal && (
+                    <Text className={styles.abnormalBadge}>异常沟通</Text>
                   )}
                   {record.type === 'pendingFollowup' && (
                     <Text className={styles.pendingBadge}>待处理</Text>
                   )}
+                  {record.type === 'revisit' && (
+                    <Text className={styles.revisitBadge}>复诊</Text>
+                  )}
                 </View>
 
                 <View className={styles.description}>{record.description}</View>
+
+                {record.patientSymptoms && record.type === 'followup' && (
+                  <View className={styles.symptomBox}>
+                    <Text className={styles.symptomLabel}>患者自述：</Text>
+                    <Text className={styles.symptomText}>{record.patientSymptoms}</Text>
+                  </View>
+                )}
+
+                {record.observations && record.observations.length > 0 && (
+                  <View className={styles.observations}>
+                    {record.observations.map((obs, index) => {
+                      const isHigh = isHighValue(obs);
+                      return (
+                        <View
+                          key={index}
+                          className={classnames(styles.obsItem, isHigh && styles.high)}
+                        >
+                          <Text className={styles.obsName}>{obs.name}</Text>
+                          {obs.value !== undefined && (
+                            <Text className={classnames(styles.value, isHigh && styles.highValue)}>
+                              {obs.value}分
+                              {isHigh && (
+                                <Text className={styles.highMarker}> 超阈值</Text>
+                              )}
+                            </Text>
+                          )}
+                          {obs.value === undefined && (
+                            <Text className={styles.pendingValue}>待评</Text>
+                          )}
+                        </View>
+                      );
+                    })}
+                  </View>
+                )}
 
                 {record.action && (
                   <View className={styles.actionRow}>
@@ -178,19 +231,10 @@ const Timeline: React.FC<TimelineProps> = ({ records, patientId }) => {
                   </View>
                 )}
 
-                {record.observations && record.observations.length > 0 && (
-                  <View className={styles.observations}>
-                    {record.observations.map((obs, index) => (
-                      <View
-                        key={index}
-                        className={classnames(styles.obsItem, isHighValue(obs) && styles.high)}
-                      >
-                        <Text>{obs.name}</Text>
-                        {obs.value !== undefined && (
-                          <Text className={styles.value}>{obs.value}分</Text>
-                        )}
-                      </View>
-                    ))}
+                {record.doctorNotes && record.type === 'followup' && (
+                  <View className={styles.noteBox}>
+                    <Text className={styles.noteLabel}>医生备注：</Text>
+                    <Text className={styles.noteText}>{record.doctorNotes}</Text>
                   </View>
                 )}
 

@@ -127,6 +127,17 @@
     }
   }
 
+  &.highScoreTab {
+    background: rgba(239, 68, 68, 0.1);
+    color: $color-error;
+    font-weight: $font-weight-medium;
+
+    &.active {
+      background: $color-error;
+      color: $color-text-white;
+    }
+  }
+
   &:active {
     opacity: 0.9;
   }
@@ -175,6 +186,18 @@
     border: 2rpx solid #B45309;
     background: linear-gradient(90deg, rgba(180, 83, 9, 0.08) 0%, $color-bg-card 25%);
     box-shadow: 0 4rpx 20rpx rgba(180, 83, 9, 0.15);
+  }
+
+  &.highScoreCard {
+    border: 2rpx solid $color-error;
+    background: linear-gradient(90deg, rgba(239, 68, 68, 0.06) 0%, $color-bg-card 25%);
+    box-shadow: 0 4rpx 20rpx rgba(239, 68, 68, 0.12);
+  }
+
+  &.revisitCard {
+    border: 2rpx solid #7C3AED;
+    background: linear-gradient(90deg, rgba(124, 58, 237, 0.06) 0%, $color-bg-card 25%);
+    box-shadow: 0 4rpx 20rpx rgba(124, 58, 237, 0.12);
   }
 
   &:active {
@@ -232,6 +255,16 @@
     background: rgba(180, 83, 9, 0.15);
     color: #B45309;
   }
+
+  &.highScore {
+    background: rgba(239, 68, 68, 0.1);
+    color: $color-error;
+  }
+
+  &.revisit {
+    background: rgba(124, 58, 237, 0.1);
+    color: #7C3AED;
+  }
 }
 
 .typeTag {
@@ -273,6 +306,43 @@
   animation: pulse 1.5s infinite;
 }
 
+.revisitTag {
+  display: inline-block;
+  padding: 4rpx $spacing-sm;
+  border-radius: $radius-xs;
+  font-size: $font-size-xs;
+  background: rgba(124, 58, 237, 0.15);
+  color: #7C3AED;
+  font-weight: $font-weight-semibold;
+  margin-right: $spacing-sm;
+}
+
+.highScoreTypeTag {
+  background: rgba(239, 68, 68, 0.12);
+  color: $color-error;
+}
+
+.revisitTypeTag {
+  background: rgba(124, 58, 237, 0.12);
+  color: #7C3AED;
+}
+
+.highScoreList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $spacing-xs;
+  margin-bottom: $spacing-sm;
+}
+
+.highScoreItem {
+  font-size: $font-size-xs;
+  padding: 4rpx $spacing-sm;
+  border-radius: $radius-xs;
+  background: rgba(239, 68, 68, 0.08);
+  color: $color-error;
+  font-weight: $font-weight-medium;
+}
+
 .description {
   font-size: $font-size-sm;
   color: $color-text-secondary;
@@ -296,6 +366,11 @@
     color: #B45309;
     font-weight: $font-weight-semibold;
   }
+
+  &.revisitText {
+    color: #7C3AED;
+    font-weight: $font-weight-semibold;
+  }
 }
 
 .actionBtn {
@@ -315,6 +390,14 @@
 
   &.overdueBtn {
     background: #B45309;
+  }
+
+  &.highScoreBtn {
+    background: $color-error;
+  }
+
+  &.revisitBtn {
+    background: #7C3AED;
   }
 }
 

@@ -1,11 +1,12 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { View, Text, Button } from '@tarojs/components';
 import Taro, { useRouter, useDidShow } from '@tarojs/taro';
 import classnames from 'classnames';
 import styles from './index.module.scss';
 import Timeline from '@/components/Timeline';
 import { useAppContext } from '@/store/AppContext';
-import { getDaysAfterSurgery, formatDateCN, isToday } from '@/utils/date';
+import { getDaysAfterSurgery, formatDateCN, isToday, isOverdue, getDaysDiff } from '@/utils/date';
+import type { FollowupPlanTemplate } from '@/types';
 
 const statusText: Record<string, string> = {
   normal: '恢复中',
@@ -21,10 +22,15 @@ const PatientDetailPage: React.FC = () => {
     patients,
     getTimelineByPatientId,
     getFollowupsByPatientId,
-    followupTasks
+    addFollowupPlanBatch,
+    getFollowupPlanTemplates,
+    completeRevisitReminder
   } = useAppContext();
 
+  const [showPlanPicker, setShowPlanPicker] = useState(false);
+
   const patient = useMemo(() => patients.find(p => p.id === patientId), [patients, patientId]);
+  const templates = useMemo(() => getFollowupPlanTemplates(), [getFollowupPlanTemplates]);
 
   const timelineRecords = useMemo(() => {
     return getTimelineByPatientId(patientId);
@@ -58,6 +64,27 @@ const PatientDetailPage: React.FC = () => {
     });
   };
 
+  const handleGeneratePlan = () => {
+    setShowPlanPicker(true);
+  };
+
+  const handleSelectTemplate = async (template: FollowupPlanTemplate, templateIndex: number) => {
+    Taro.showModal({
+      title: '生成回访方案',
+      content: `确认生成「${template.name}」？\n将为该患者创建 ${template.plans.length} 个回访计划`,
+      success: (res) => {
+        if (res.confirm) {
+          const ids = addFollowupPlanBatch(patientId, templateIndex);
+          setShowPlanPicker(false);
+          Taro.showToast({
+            title: `已生成${ids.length}个回访计划`,
+            icon: 'success'
+          });
+        }
+      }
+    });
+  };
+
   const handleFollowupClick = (followupId: string) => {
     Taro.navigateTo({
       url: `/pages/followup-detail/index?id=${followupId}&patientId=${patientId}`
@@ -68,6 +95,20 @@ const PatientDetailPage: React.FC = () => {
     Taro.makePhoneCall({
       phoneNumber: patient.phone.replace(/\*/g, '0'),
       fail: (e) => console.error('[PatientDetail] Call failed:', e)
+    });
+  };
+
+  const handleCompleteRevisit = () => {
+    if (!patient.revisitReminder) return;
+    Taro.showModal({
+      title: '复诊完成',
+      content: `确认患者已完成复诊？`,
+      success: (res) => {
+        if (res.confirm) {
+          completeRevisitReminder(patientId);
+          Taro.showToast({ title: '复诊已确认', icon: 'success' });
+        }
+      }
     });
   };
 
@@ -127,50 +168,92 @@ const PatientDetailPage: React.FC = () => {
         )}
       </View>
 
+      {patient.revisitReminder && !patient.revisitReminder.completed && (
+        <View className={styles.revisitBanner} onClick={handleCompleteRevisit}>
+          <View className={styles.revisitIcon}>🏥</View>
+          <View className={styles.revisitContent}>
+            <Text className={styles.revisitTitle}>建议复诊提醒</Text>
+            <Text className={styles.revisitDesc}>
+              {patient.revisitReminder.reason || '请跟进'} · 计划日期：{formatDateCN(patient.revisitReminder.scheduledDate)}
+              {isOverdue(patient.revisitReminder.scheduledDate) && (
+                <Text className={styles.revisitOverdue}> （逾期{getDaysDiff(patient.revisitReminder.scheduledDate, new Date().toISOString().split('T')[0])}天）</Text>
+              )}
+            </Text>
+          </View>
+          <View className={styles.revisitAction}>确认完成 ›</View>
+        </View>
+      )}
+
       {pendingFollowups.length > 0 && (
         <View className={styles.section}>
           <Text className={styles.sectionTitle}>待处理回访</Text>
-          {pendingFollowups.map(followup => (
-            <View
-              key={followup.id}
-              className={classnames(styles.pendingCard, isToday(followup.scheduledDate) && styles.todayPending)}
-              onClick={() => handleFollowupClick(followup.id)}
-            >
-              <View className={styles.pendingHeader}>
-                <View className={styles.pendingInfo}>
-                  <Text className={styles.pendingDate}>
-                    {isToday(followup.scheduledDate) ? '今日' : formatDateCN(followup.scheduledDate)}回访
-                  </Text>
-                  {followup.isAbnormal && (
-                    <View className={styles.abnormalTag}>异常</View>
-                  )}
-                  {isToday(followup.scheduledDate) && (
-                    <View className={styles.todayTag}>待处理</View>
-                  )}
+          {pendingFollowups.map(followup => {
+            const pendingOverdue = isOverdue(followup.scheduledDate);
+            const overdueDays = pendingOverdue ? getDaysDiff(followup.scheduledDate, new Date().toISOString().split('T')[0]) : 0;
+            return (
+              <View
+                key={followup.id}
+                className={classnames(
+                  styles.pendingCard,
+                  isToday(followup.scheduledDate) && styles.todayPending,
+                  pendingOverdue && styles.overduePending
+                )}
+                onClick={() => handleFollowupClick(followup.id)}
+              >
+                <View className={styles.pendingHeader}>
+                  <View className={styles.pendingInfo}>
+                    <Text className={classnames(
+                      styles.pendingDate,
+                      pendingOverdue && styles.overdueText
+                    )}>
+                      {pendingOverdue
+                        ? `逾期${overdueDays}天`
+                        : isToday(followup.scheduledDate)
+                          ? '今日'
+                          : formatDateCN(followup.scheduledDate)}回访
+                    </Text>
+                    {followup.isAbnormal && (
+                      <View className={styles.abnormalTag}>异常</View>
+                    )}
+                    {isToday(followup.scheduledDate) && !pendingOverdue && (
+                      <View className={styles.todayTag}>待处理</View>
+                    )}
+                    {pendingOverdue && (
+                      <View className={styles.overdueTag}>立即处理</View>
+                    )}
+                  </View>
+                  <Text className={styles.pendingArrow}>›</Text>
                 </View>
-                <Text className={styles.pendingArrow}>›</Text>
+                <View className={styles.pendingObs}>
+                  {followup.observations.map((obs, i) => (
+                    <Text key={i} className={classnames(
+                      styles.obsTag,
+                      (obs.value ?? 0) >= (obs.threshold ?? 5) && styles.highScoreObs
+                    )}>
+                      {obs.name}{obs.value ? ` ${obs.value}分` : ''}
+                    </Text>
+                  ))}
+                </View>
+                {followup.patientSymptoms && (
+                  <Text className={styles.pendingSymptoms}>{followup.patientSymptoms}</Text>
+                )}
               </View>
-              <View className={styles.pendingObs}>
-                {followup.observations.map((obs, i) => (
-                  <Text key={i} className={styles.obsTag}>
-                    {obs.name}{obs.value ? ` ${obs.value}分` : ''}
-                  </Text>
-                ))}
-              </View>
-              {followup.patientSymptoms && (
-                <Text className={styles.pendingSymptoms}>{followup.patientSymptoms}</Text>
-              )}
-            </View>
-          ))}
+            );
+          })}
         </View>
       )}
 
       <View className={styles.section}>
         <View className={styles.sectionHeader}>
           <Text className={styles.sectionTitle}>回访时间轴</Text>
-          <Button className={styles.addBtn} onClick={handleAddFollowup}>
-            + 新增回访
-          </Button>
+          <View className={styles.btnGroup}>
+            <Button className={styles.planBtn} onClick={handleGeneratePlan}>
+              📋 一键生成方案
+            </Button>
+            <Button className={styles.addBtn} onClick={handleAddFollowup}>
+              + 新增回访
+            </Button>
+          </View>
         </View>
         {timelineRecords.length > 0 ? (
           <Timeline records={timelineRecords} patientId={patientId} />
@@ -181,12 +264,46 @@ const PatientDetailPage: React.FC = () => {
         )}
       </View>
 
+      {showPlanPicker && (
+        <View className={styles.modalMask} onClick={() => setShowPlanPicker(false)}>
+          <View className={styles.modalContent} onClick={(e) => e.stopPropagation?.()}>
+            <Text className={styles.modalTitle}>选择回访方案</Text>
+            <Text className={styles.modalDesc}>将根据手术日期自动安排回访时间</Text>
+            {templates.map((tpl, idx) => (
+              <View key={idx} className={styles.templateItem} onClick={() => handleSelectTemplate(tpl, idx)}>
+                <View className={styles.templateHeader}>
+                  <Text className={styles.templateName}>{tpl.name}</Text>
+                  <Text className={styles.templateCount}>{tpl.plans.length}个节点</Text>
+                </View>
+                <Text className={styles.templateDesc}>{tpl.description}</Text>
+                <View className={styles.templatePlans}>
+                  {tpl.plans.map((plan, pIdx) => (
+                    <Text key={pIdx} className={styles.planChip}>
+                      术后{plan.daysAfterSurgery}天
+                    </Text>
+                  ))}
+                </View>
+              </View>
+            ))}
+            <Button className={styles.modalCancel} onClick={() => setShowPlanPicker(false)}>
+              取消
+            </Button>
+          </View>
+        </View>
+      )}
+
       <View className={styles.bottomBar}>
         <Button
           className={classnames(styles.bottomBtn, styles.outline)}
           onClick={handleCallPatient}
         >
           电话联系
+        </Button>
+        <Button
+          className={classnames(styles.bottomBtn, styles.secondary)}
+          onClick={handleGeneratePlan}
+        >
+          一键方案
         </Button>
         <Button
           className={classnames(styles.bottomBtn, styles.primary)}

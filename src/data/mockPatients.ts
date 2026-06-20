@@ -66,6 +66,12 @@ export const mockPatients: Patient[] = [
     status: 'abnormal',
     followupCount: 2,
     nextFollowupDate: '2026-06-22',
+    revisitReminder: {
+      id: 'revisit_4_mock',
+      scheduledDate: '2026-06-25',
+      completed: false,
+      reason: '肿胀未消退，咬合不适加重'
+    },
     createdAt: '2026-06-12'
   },
   {

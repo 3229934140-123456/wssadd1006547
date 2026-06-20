@@ -1,9 +1,9 @@
 import React, { createContext, useContext, useState, useCallback, useEffect, ReactNode } from 'react';
 import Taro from '@tarojs/taro';
-import type { Patient, FollowupTask, TodoItem, TimelineRecord, DoctorAction } from '@/types';
+import type { Patient, FollowupTask, TodoItem, TimelineRecord, DoctorAction, ObservationItem, ObservationType } from '@/types';
 import { mockPatients } from '@/data/mockPatients';
-import { mockFollowupTasks, mockTodoItems, mockTimelines } from '@/data/mockFollowups';
-import { isToday } from '@/utils/date';
+import { mockFollowupTasks, mockTodoItems, mockTimelines, followupPlanTemplates } from '@/data/mockFollowups';
+import { isToday, isOverdue, addDays, formatDate } from '@/utils/date';
 
 const STORAGE_KEYS = {
   patients: 'dental_app_patients',
@@ -33,6 +33,19 @@ function saveToStorage<T>(key: string, data: T): void {
   }
 }
 
+export const HIGH_SCORE_THRESHOLD = 5;
+
+export const getHighScoreObservations = (observations: ObservationItem[]): ObservationItem[] => {
+  return observations.filter(o => (o.value ?? 0) >= (o.threshold ?? HIGH_SCORE_THRESHOLD));
+};
+
+export const observationLabel: Record<ObservationType, string> = {
+  pain: '疼痛',
+  swelling: '肿胀',
+  bleeding: '渗血',
+  occlusion: '咬合'
+};
+
 interface AppContextType {
   patients: Patient[];
   followupTasks: FollowupTask[];
@@ -52,6 +65,10 @@ interface AppContextType {
   getPatientById: (id: string) => Patient | undefined;
   getFollowupById: (id: string) => FollowupTask | undefined;
   getTodoByFollowupId: (followupId: string) => TodoItem | undefined;
+  addFollowupPlanBatch: (patientId: string, templateIndex?: number) => string[];
+  getHighScoreFollowupTasks: () => FollowupTask[];
+  completeRevisitReminder: (patientId: string) => void;
+  getFollowupPlanTemplates: () => typeof followupPlanTemplates;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -104,11 +121,17 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     return followupTasks.filter(f => f.status === 'pending' && isToday(f.scheduledDate));
   }, [followupTasks]);
 
+  const getHighScoreFollowupTasks = useCallback((): FollowupTask[] => {
+    return followupTasks.filter(f => f.status === 'pending' && getHighScoreObservations(f.observations).length > 0);
+  }, [followupTasks]);
+
   const getTodoByFollowupId = useCallback((followupId: string): TodoItem | undefined => {
     const followup = followupTasks.find(f => f.id === followupId);
     if (!followup) return undefined;
     return todoItems.find(t => t.patientId === followup.patientId && t.scheduledDate === followup.scheduledDate);
   }, [followupTasks, todoItems]);
+
+  const getFollowupPlanTemplates = useCallback(() => followupPlanTemplates, []);
 
   const addTimelineRecord = useCallback((patientId: string, record: TimelineRecord) => {
     setTimelines(prev => {
@@ -126,20 +149,31 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     );
     if (existingTodo) return;
 
-    const hasHighScore = task.observations.some(o => (o.value || 0) >= 5);
+    const highScoreObs = getHighScoreObservations(task.observations);
+    const hasHighScore = highScoreObs.length > 0;
+    const highScoreTypes = highScoreObs.map(o => o.type);
+
+    let type: TodoItem['type'] = 'pending';
+    if (task.isAbnormal) type = 'abnormal';
+    if (hasHighScore) type = 'highScore';
+
     const newTodo: TodoItem = {
       id: `todo_f_${task.id}`,
       patientId: task.patientId,
       patientName: task.patientName,
-      type: task.isAbnormal ? 'abnormal' : 'pending',
-      title: task.isAbnormal
-        ? `${task.observations.filter(o => (o.value || 0) >= 5).map(o => o.name).join('、')}异常`
-        : '常规回访',
+      type,
+      title: hasHighScore
+        ? `${highScoreObs.map(o => o.name).join('、')}异常高分`
+        : task.isAbnormal
+          ? '异常需关注'
+          : '常规回访',
       description: task.patientSymptoms
         || task.observations.map(o => `${o.name}${o.value ? o.value + '分' : '待评'}`).join('，'),
       priority: hasHighScore ? 'high' : task.isAbnormal ? 'medium' : 'low',
       scheduledDate: task.scheduledDate,
-      isRead: false
+      isRead: false,
+      highScoreTypes,
+      followupId: task.id
     };
     setTodoItems(prev => [newTodo, ...prev]);
   }, [todoItems]);
@@ -175,7 +209,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   }, []);
 
   const addFollowupTask = useCallback((task: Omit<FollowupTask, 'id' | 'createdAt'>): string => {
-    const newId = `f_${Date.now()}`;
+    const newId = `f_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
     const newTask: FollowupTask = {
       ...task,
       id: newId,
@@ -195,13 +229,117 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         ? `观察项：${task.observations.map(o => o.name).join('、')}`
         : '医生已创建回访任务，请按计划跟进',
       isAbnormal: newTask.isAbnormal,
+      observations: newTask.observations,
       followupId: newId
     };
     addTimelineRecord(task.patientId, pendingRecord);
 
+    setPatients(prev => prev.map(p => {
+      if (p.id !== task.patientId) return p;
+      if (p.nextFollowupDate && p.nextFollowupDate > newTask.scheduledDate) return p;
+      return { ...p, nextFollowupDate: newTask.scheduledDate };
+    }));
+
     console.log('[AppContext] Added new followup task for:', task.patientName, 'date:', task.scheduledDate);
     return newId;
   }, [generateTodoFromFollowup, addTimelineRecord]);
+
+  const addFollowupPlanBatch = useCallback((patientId: string, templateIndex: number = 0): string[] => {
+    const patient = patients.find(p => p.id === patientId);
+    if (!patient || !patient.surgeryDate) return [];
+
+    const template = followupPlanTemplates[templateIndex] || followupPlanTemplates[0];
+    const createdIds: string[] = [];
+    const now = Date.now();
+
+    template.plans.forEach((plan, idx) => {
+      const scheduledDate = addDays(patient.surgeryDate, plan.daysAfterSurgery);
+      if (scheduledDate < new Date().toISOString().split('T')[0]) return;
+
+      const taskId = `f_${now}_${idx}_${Math.random().toString(36).slice(2, 5)}`;
+      const observations = plan.observations.map(o => ({
+        type: o.type,
+        name: o.name,
+        threshold: o.threshold
+      }));
+
+      const newTask: FollowupTask = {
+        id: taskId,
+        patientId,
+        patientName: patient.name,
+        scheduledDate,
+        status: 'pending',
+        observations,
+        isAbnormal: false,
+        createdAt: new Date().toISOString().split('T')[0],
+        templateName: template.name
+      };
+
+      setFollowupTasks(prev => [newTask, ...prev]);
+      createdIds.push(taskId);
+
+      const highScoreObs = getHighScoreObservations(observations);
+      const hasHighScore = highScoreObs.length > 0;
+
+      let type: TodoItem['type'] = 'pending';
+      if (newTask.isAbnormal) type = 'abnormal';
+      if (hasHighScore) type = 'highScore';
+
+      const newTodo: TodoItem = {
+        id: `todo_f_${taskId}`,
+        patientId,
+        patientName: patient.name,
+        type,
+        title: hasHighScore
+          ? `${highScoreObs.map(o => o.name).join('、')}异常高分`
+          : newTask.isAbnormal
+            ? '异常需关注'
+            : `术后${plan.daysAfterSurgery}天回访`,
+        description: `观察项：${observations.map(o => o.name).join('、')}`,
+        priority: hasHighScore ? 'high' : newTask.isAbnormal ? 'medium' : 'low',
+        scheduledDate,
+        isRead: false,
+        highScoreTypes: highScoreObs.map(o => o.type),
+        followupId: taskId
+      };
+      setTodoItems(prev => [newTodo, ...prev]);
+
+      const pendingRecord: TimelineRecord = {
+        id: `t_${patientId}_pending_${taskId}`,
+        date: scheduledDate,
+        type: 'pendingFollowup',
+        title: `${template.name} · ${plan.name}`,
+        description: `观察项：${observations.map(o => o.name).join('、')}`,
+        isAbnormal: false,
+        observations,
+        followupId: taskId
+      };
+      setTimelines(prev => {
+        const existing = prev[patientId] || [];
+        return {
+          ...prev,
+          [patientId]: [pendingRecord, ...existing]
+        };
+      });
+    });
+
+    const allDates = createdIds
+      .map((_, i) => addDays(patient.surgeryDate, template.plans[i]?.daysAfterSurgery || 0))
+      .concat(followupTasks.filter(f => f.patientId === patientId && f.status === 'pending').map(f => f.scheduledDate))
+      .filter(Boolean)
+      .sort();
+
+    if (allDates.length > 0) {
+      setPatients(prev => prev.map(p =>
+        p.id === patientId
+          ? { ...p, nextFollowupDate: allDates[0] }
+          : p
+      ));
+    }
+
+    console.log('[AppContext] Batch created followup plan:', template.name, 'count:', createdIds.length);
+    return createdIds;
+  }, [patients, followupTasks]);
 
   const updateFollowupTask = useCallback((id: string, updates: Partial<FollowupTask>) => {
     setFollowupTasks(prev => prev.map(t =>
@@ -210,8 +348,37 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     console.log('[AppContext] Updated followup task:', id);
   }, []);
 
+  const completeRevisitReminder = useCallback((patientId: string) => {
+    setPatients(prev => prev.map(p => {
+      if (p.id !== patientId || !p.revisitReminder) return p;
+      return {
+        ...p,
+        revisitReminder: {
+          ...p.revisitReminder,
+          completed: true
+        }
+      };
+    }));
+
+    setTodoItems(prev => prev.filter(t => !(t.patientId === patientId && t.type === 'revisit')));
+
+    const today = new Date().toISOString().split('T')[0];
+    const revisitRecord: TimelineRecord = {
+      id: `t_${patientId}_revisit_${Date.now()}`,
+      date: today,
+      type: 'revisit',
+      title: '复诊完成',
+      description: '患者已按建议完成复诊，继续观察恢复情况',
+      isAbnormal: false
+    };
+    addTimelineRecord(patientId, revisitRecord);
+
+    console.log('[AppContext] Completed revisit reminder for:', patientId);
+  }, [addTimelineRecord]);
+
   const completeFollowup = useCallback((followupId: string, patientId: string, action: DoctorAction, notes: string) => {
     const today = new Date().toISOString().split('T')[0];
+    const followup = followupTasks.find(f => f.id === followupId);
 
     setFollowupTasks(prev => prev.map(t =>
       t.id === followupId ? {
@@ -223,18 +390,23 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       } : t
     ));
 
-    const followup = followupTasks.find(f => f.id === followupId);
     if (followup) {
-      const hasAbnormal = followup.observations.some(o => (o.value || 0) >= 5);
+      const highScoreObs = getHighScoreObservations(followup.observations);
+      const hasHighScore = highScoreObs.length > 0;
+
       const record: TimelineRecord = {
         id: `t_${patientId}_f_${Date.now()}`,
         date: today,
         type: 'followup',
         title: `回访完成 - ${actionTextMap[action]}`,
-        description: notes || `${actionTextMap[action]}${hasAbnormal ? '，发现异常指标' : '，患者恢复良好'}`,
-        isAbnormal: hasAbnormal,
+        description: notes || `${actionTextMap[action]}${hasHighScore ? '，存在异常指标' : '，患者恢复良好'}`,
+        isAbnormal: hasHighScore,
         action,
-        observations: followup.observations.filter(o => o.value !== undefined)
+        observations: followup.observations.filter(o => o.value !== undefined),
+        followupId,
+        doctorNotes: notes,
+        patientSymptoms: followup.patientSymptoms,
+        highScoreObservations: highScoreObs
       };
       setTimelines(prev => {
         const existing = prev[patientId] || [];
@@ -244,11 +416,56 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
           [patientId]: [record, ...filtered]
         };
       });
+
+      if (action === 'revisit') {
+        const revisitDate = addDays(today, 7);
+        setPatients(prev => prev.map(p => {
+          if (p.id !== patientId) return p;
+          return {
+            ...p,
+            revisitReminder: {
+              id: `revisit_${patientId}_${Date.now()}`,
+              scheduledDate: revisitDate,
+              completed: false,
+              reason: notes || '建议复诊'
+            }
+          };
+        }));
+
+        const revisitTodo: TodoItem = {
+          id: `todo_revisit_${patientId}_${Date.now()}`,
+          patientId,
+          patientName: followup.patientName,
+          type: 'revisit',
+          title: '建议复诊提醒',
+          description: notes || '建议尽快复诊进一步检查',
+          priority: 'high',
+          scheduledDate: revisitDate,
+          isRead: false
+        };
+        setTodoItems(prev => [revisitTodo, ...prev]);
+
+        const revisitRecord: TimelineRecord = {
+          id: `t_${patientId}_revisit_plan_${Date.now()}`,
+          date: today,
+          type: 'revisit',
+          title: '已建议复诊',
+          description: `${notes || '医生建议复诊'}，计划复诊时间：${revisitDate}`,
+          isAbnormal: true
+        };
+        setTimelines(prev => {
+          const existing = prev[patientId] || [];
+          return {
+            ...prev,
+            [patientId]: [revisitRecord, ...existing]
+          };
+        });
+      }
     }
 
     setPatients(prev => prev.map(p => {
       if (p.id !== patientId) return p;
-      const hasAbnormal = followup?.observations.some(o => (o.value || 0) >= 5) || false;
+      const hasAbnormal = followup?.observations.some(o => (o.value || 0) >= (o.threshold ?? HIGH_SCORE_THRESHOLD)) || false;
       const pendingFollowups = followupTasks.filter(
         f => f.patientId === patientId && f.status === 'pending' && f.id !== followupId
       );
@@ -305,7 +522,11 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       getTodayFollowupTasks,
       getPatientById,
       getFollowupById,
-      getTodoByFollowupId
+      getTodoByFollowupId,
+      addFollowupPlanBatch,
+      getHighScoreFollowupTasks,
+      completeRevisitReminder,
+      getFollowupPlanTemplates
     }}>
       {children}
     </AppContext.Provider>

@@ -13,6 +13,12 @@ export interface Patient {
   status: 'normal' | 'abnormal' | 'recovered';
   followupCount: number;
   nextFollowupDate?: string;
+  revisitReminder?: {
+    id: string;
+    scheduledDate: string;
+    completed: boolean;
+    reason: string;
+  };
   createdAt: string;
 }
 
@@ -23,6 +29,7 @@ export interface ObservationItem {
   name: string;
   value?: number;
   description?: string;
+  threshold?: number;
 }
 
 export type FollowupStatus = 'pending' | 'completed' | 'abnormal';
@@ -32,7 +39,7 @@ export type DoctorAction = 'call' | 'nurse' | 'revisit';
 export interface TimelineRecord {
   id: string;
   date: string;
-  type: 'surgery' | 'followup' | 'pendingFollowup' | 'note';
+  type: 'surgery' | 'followup' | 'pendingFollowup' | 'note' | 'revisit';
   title: string;
   description: string;
   isAbnormal: boolean;
@@ -40,6 +47,9 @@ export interface TimelineRecord {
   photos?: string[];
   observations?: ObservationItem[];
   followupId?: string;
+  doctorNotes?: string;
+  patientSymptoms?: string;
+  highScoreObservations?: ObservationItem[];
 }
 
 export interface FollowupTask {
@@ -56,18 +66,31 @@ export interface FollowupTask {
   isAbnormal: boolean;
   createdAt: string;
   completedAt?: string;
+  templateName?: string;
 }
 
 export interface TodoItem {
   id: string;
   patientId: string;
   patientName: string;
-  type: 'abnormal' | 'pending' | 'urgent';
+  type: 'abnormal' | 'pending' | 'urgent' | 'highScore' | 'revisit';
   title: string;
   description: string;
   priority: 'high' | 'medium' | 'low';
   scheduledDate: string;
   isRead: boolean;
+  highScoreTypes?: ObservationType[];
+  followupId?: string;
+}
+
+export interface FollowupPlanTemplate {
+  name: string;
+  description: string;
+  plans: {
+    daysAfterSurgery: number;
+    name: string;
+    observations: { type: ObservationType; name: string; threshold: number }[];
+  }[];
 }
 
 export type TabBarPage = 'patient' | 'todo' | 'mine';

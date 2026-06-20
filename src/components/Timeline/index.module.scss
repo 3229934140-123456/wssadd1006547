@@ -69,6 +69,15 @@
   &.pendingItem {
     cursor: pointer;
   }
+
+  &.revisitItem {
+    cursor: pointer;
+  }
+
+  &.abnormalFollowupItem {
+    background: linear-gradient(90deg, rgba(239, 68, 68, 0.04) 0%, transparent 100%);
+    border-radius: $radius-md;
+  }
 }
 
 .node {
@@ -148,6 +157,24 @@
       font-weight: $font-weight-bold;
     }
   }
+
+  &.revisit {
+    .dot {
+      width: 28rpx;
+      height: 28rpx;
+      border-radius: $radius-round;
+      background: #7C3AED;
+      box-shadow: 0 0 0 8rpx rgba(124, 58, 237, 0.2);
+    }
+
+    &::after {
+      content: '+';
+      position: absolute;
+      color: $color-text-white;
+      font-size: $font-size-xs;
+      font-weight: $font-weight-bold;
+    }
+  }
 }
 
 @keyframes pulse {
@@ -169,6 +196,11 @@
   &.overdueContent {
     border: 2rpx solid rgba(180, 83, 9, 0.35);
     background: linear-gradient(135deg, rgba(180, 83, 9, 0.08) 0%, $color-bg-card 50%);
+  }
+
+  &.revisitContent {
+    border: 2rpx solid rgba(124, 58, 237, 0.25);
+    background: linear-gradient(135deg, rgba(124, 58, 237, 0.06) 0%, $color-bg-card 50%);
   }
 }
 
@@ -240,6 +272,11 @@
     background: rgba(180, 83, 9, 0.2);
     color: #B45309;
   }
+
+  &.revisit {
+    background: rgba(124, 58, 237, 0.1);
+    color: #7C3AED;
+  }
 }
 
 .title {
@@ -270,6 +307,16 @@
   display: inline-block;
   padding: 2rpx $spacing-xs;
   background: $color-warning;
+  color: $color-text-white;
+  font-size: $font-size-xs;
+  border-radius: $radius-xs;
+  margin-left: $spacing-xs;
+}
+
+.revisitBadge {
+  display: inline-block;
+  padding: 2rpx $spacing-xs;
+  background: #7C3AED;
   color: $color-text-white;
   font-size: $font-size-xs;
   border-radius: $radius-xs;
@@ -322,19 +369,75 @@
   font-size: $font-size-xs;
   color: $color-text-secondary;
 
+  .obsName {
+    color: $color-text-secondary;
+  }
+
   .value {
     color: $color-primary;
+    font-weight: $font-weight-semibold;
+
+    &.highValue {
+      color: $color-error;
+    }
+  }
+
+  .pendingValue {
+    color: $color-text-tertiary;
+    font-style: italic;
+  }
+
+  .highMarker {
+    color: $color-error;
+    font-size: 20rpx;
+    margin-left: 4rpx;
     font-weight: $font-weight-semibold;
   }
 
   &.high {
     background: rgba(239, 68, 68, 0.1);
     color: $color-error;
-
-    .value {
-      color: $color-error;
-    }
   }
+}
+
+.symptomBox {
+  background: rgba(249, 115, 22, 0.06);
+  border-left: 4rpx solid $color-warning;
+  padding: $spacing-sm $spacing-md;
+  border-radius: $radius-xs;
+  margin-bottom: $spacing-sm;
+}
+
+.symptomLabel {
+  font-size: $font-size-xs;
+  color: $color-warning;
+  font-weight: $font-weight-medium;
+}
+
+.symptomText {
+  font-size: $font-size-xs;
+  color: $color-text-primary;
+  line-height: 1.5;
+}
+
+.noteBox {
+  background: rgba(15, 118, 110, 0.06);
+  border-left: 4rpx solid $color-primary;
+  padding: $spacing-sm $spacing-md;
+  border-radius: $radius-xs;
+  margin-bottom: $spacing-sm;
+}
+
+.noteLabel {
+  font-size: $font-size-xs;
+  color: $color-primary;
+  font-weight: $font-weight-medium;
+}
+
+.noteText {
+  font-size: $font-size-xs;
+  color: $color-text-primary;
+  line-height: 1.5;
 }
 
 .photos {
