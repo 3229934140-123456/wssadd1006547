@@ -173,7 +173,7 @@ const PatientDetailPage: React.FC = () => {
           </Button>
         </View>
         {timelineRecords.length > 0 ? (
-          <Timeline records={timelineRecords} />
+          <Timeline records={timelineRecords} patientId={patientId} />
         ) : (
           <View className={styles.emptyTimeline}>
             暂无回访记录，点击上方按钮创建回访计划

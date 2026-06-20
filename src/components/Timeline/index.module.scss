@@ -1,5 +1,48 @@
 @use '@/styles/variables.scss' as *;
 
+.container {
+  width: 100%;
+}
+
+.filterBar {
+  display: flex;
+  gap: $spacing-sm;
+  margin-bottom: $spacing-lg;
+  overflow-x: auto;
+  padding-bottom: $spacing-xs;
+}
+
+.filterBtn {
+  @include button-reset;
+  padding: $spacing-xs $spacing-md;
+  border-radius: $radius-button;
+  font-size: $font-size-xs;
+  color: $color-text-secondary;
+  background: $color-bg-card;
+  border: 2rpx solid $color-border;
+  white-space: nowrap;
+  transition: all $transition-base;
+
+  &.active {
+    background: $color-primary;
+    color: $color-text-white;
+    border-color: $color-primary;
+    font-weight: $font-weight-medium;
+  }
+
+  &:active {
+    opacity: 0.9;
+    transform: scale(0.98);
+  }
+}
+
+.empty {
+  text-align: center;
+  padding: $spacing-xl * 2 0;
+  color: $color-text-tertiary;
+  font-size: $font-size-sm;
+}
+
 .timeline {
   position: relative;
   padding-left: $spacing-xl;
@@ -21,6 +64,10 @@
 
   &:last-child {
     padding-bottom: 0;
+  }
+
+  &.pendingItem {
+    cursor: pointer;
   }
 }
 
@@ -72,6 +119,40 @@
       background: $color-primary;
     }
   }
+
+  &.pending {
+    .dot {
+      width: 24rpx;
+      height: 24rpx;
+      border-radius: $radius-round;
+      background: $color-warning;
+      animation: pulse 2s infinite;
+    }
+  }
+
+  &.overdue {
+    .dot {
+      width: 28rpx;
+      height: 28rpx;
+      border-radius: $radius-round;
+      background: #B45309;
+      box-shadow: 0 0 0 8rpx rgba(180, 83, 9, 0.2);
+      animation: pulse 1.5s infinite;
+    }
+
+    &::after {
+      content: '!';
+      position: absolute;
+      color: $color-text-white;
+      font-size: $font-size-xs;
+      font-weight: $font-weight-bold;
+    }
+  }
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
 }
 
 .content {
@@ -79,6 +160,16 @@
   border-radius: $radius-md;
   padding: $spacing-md;
   box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.04);
+
+  &.pendingContent {
+    border: 2rpx solid rgba(245, 158, 11, 0.3);
+    background: linear-gradient(135deg, rgba(245, 158, 11, 0.06) 0%, $color-bg-card 50%);
+  }
+
+  &.overdueContent {
+    border: 2rpx solid rgba(180, 83, 9, 0.35);
+    background: linear-gradient(135deg, rgba(180, 83, 9, 0.08) 0%, $color-bg-card 50%);
+  }
 }
 
 .header {
@@ -91,6 +182,32 @@
 .date {
   font-size: $font-size-sm;
   color: $color-text-tertiary;
+  display: flex;
+  align-items: center;
+  gap: $spacing-xs;
+
+  &.overdueText {
+    color: #B45309;
+    font-weight: $font-weight-semibold;
+  }
+}
+
+.todayTag {
+  padding: 2rpx $spacing-xs;
+  border-radius: $radius-xs;
+  font-size: 20rpx;
+  background: rgba(15, 118, 110, 0.15);
+  color: $color-primary;
+  font-weight: $font-weight-medium;
+}
+
+.overdueTag {
+  padding: 2rpx $spacing-xs;
+  border-radius: $radius-xs;
+  font-size: 20rpx;
+  background: rgba(180, 83, 9, 0.2);
+  color: #B45309;
+  font-weight: $font-weight-semibold;
 }
 
 .typeTag {
@@ -109,9 +226,19 @@
     color: $color-info;
   }
 
+  &.pendingFollowup {
+    background: rgba(245, 158, 11, 0.15);
+    color: $color-warning;
+  }
+
   &.note {
     background: rgba(245, 158, 11, 0.1);
     color: $color-warning;
+  }
+
+  &.overdueTagStyle {
+    background: rgba(180, 83, 9, 0.2);
+    color: #B45309;
   }
 }
 
@@ -127,6 +254,26 @@
   color: $color-text-secondary;
   line-height: 1.6;
   margin-bottom: $spacing-sm;
+}
+
+.abnormalBadge {
+  display: inline-block;
+  padding: 2rpx $spacing-xs;
+  background: $color-error;
+  color: $color-text-white;
+  font-size: $font-size-xs;
+  border-radius: $radius-xs;
+  margin-left: $spacing-xs;
+}
+
+.pendingBadge {
+  display: inline-block;
+  padding: 2rpx $spacing-xs;
+  background: $color-warning;
+  color: $color-text-white;
+  font-size: $font-size-xs;
+  border-radius: $radius-xs;
+  margin-left: $spacing-xs;
 }
 
 .actionRow {
@@ -208,12 +355,22 @@
   height: 100%;
 }
 
-.abnormalBadge {
-  display: inline-block;
-  padding: 2rpx $spacing-xs;
-  background: $color-error;
-  color: $color-text-white;
+.pendingFooter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: $spacing-sm;
+  margin-top: $spacing-sm;
+  border-top: 1rpx dashed $color-border;
+}
+
+.pendingHint {
   font-size: $font-size-xs;
-  border-radius: $radius-xs;
-  margin-left: $spacing-xs;
+  color: $color-text-tertiary;
+}
+
+.pendingBtn {
+  font-size: $font-size-xs;
+  color: $color-primary;
+  font-weight: $font-weight-medium;
 }

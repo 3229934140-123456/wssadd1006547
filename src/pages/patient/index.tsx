@@ -5,9 +5,9 @@ import classnames from 'classnames';
 import styles from './index.module.scss';
 import PatientCard from '@/components/PatientCard';
 import { useAppContext } from '@/store/AppContext';
-import { isToday } from '@/utils/date';
+import { isToday, isOverdue } from '@/utils/date';
 
-type FilterType = 'all' | 'normal' | 'abnormal' | 'recovered' | 'today';
+type FilterType = 'all' | 'overdue' | 'today' | 'abnormal' | 'normal' | 'recovered';
 
 const PatientPage: React.FC = () => {
   const { patients, followupTasks, todoItems, getUnreadTodoCount, getTodayFollowupTasks } = useAppContext();
@@ -20,6 +20,14 @@ const PatientPage: React.FC = () => {
     return new Set(todayFollowupTasks.map(f => f.patientId));
   }, [todayFollowupTasks]);
 
+  const overduePatientIds = useMemo(() => {
+    return new Set(
+      followupTasks
+        .filter(f => f.status === 'pending' && isOverdue(f.scheduledDate))
+        .map(f => f.patientId)
+    );
+  }, [followupTasks]);
+
   const filteredPatients = useMemo(() => {
     let result = [...patients];
 
@@ -31,6 +39,9 @@ const PatientPage: React.FC = () => {
     }
 
     switch (filter) {
+      case 'overdue':
+        result = result.filter(p => overduePatientIds.has(p.id));
+        break;
       case 'today':
         result = result.filter(p => todayFollowupPatientIds.has(p.id));
         break;
@@ -46,23 +57,30 @@ const PatientPage: React.FC = () => {
     }
 
     return result.sort((a, b) => {
+      const aOverdue = overduePatientIds.has(a.id);
+      const bOverdue = overduePatientIds.has(b.id);
+      if (aOverdue !== bOverdue) return aOverdue ? -1 : 1;
+
       const aToday = todayFollowupPatientIds.has(a.id);
       const bToday = todayFollowupPatientIds.has(b.id);
       if (aToday !== bToday) return aToday ? -1 : 1;
+
       if (a.status === 'abnormal' && b.status !== 'abnormal') return -1;
       if (a.status !== 'abnormal' && b.status === 'abnormal') return 1;
+
       return new Date(b.surgeryDate).getTime() - new Date(a.surgeryDate).getTime();
     });
-  }, [patients, searchText, filter, todayFollowupPatientIds]);
+  }, [patients, searchText, filter, todayFollowupPatientIds, overduePatientIds]);
 
   const stats = useMemo(() => {
     const abnormalCount = patients.filter(p => p.status === 'abnormal').length;
     return {
       total: patients.length,
       todayFollowups: todayFollowupTasks.length,
-      abnormalCount
+      abnormalCount,
+      overdueCount: overduePatientIds.size
     };
-  }, [patients, todayFollowupTasks]);
+  }, [patients, todayFollowupTasks, overduePatientIds]);
 
   usePullDownRefresh(() => {
     setIsRefreshing(true);
@@ -83,8 +101,15 @@ const PatientPage: React.FC = () => {
     });
   };
 
-  const filterOptions: { key: FilterType; label: string; isAbnormal?: boolean; isToday?: boolean; badge?: number }[] = [
+  const handleGoCalendar = () => {
+    Taro.navigateTo({
+      url: '/pages/calendar/index'
+    });
+  };
+
+  const filterOptions: { key: FilterType; label: string; isAbnormal?: boolean; isToday?: boolean; isOverdue?: boolean; badge?: number }[] = [
     { key: 'all', label: '全部' },
+    { key: 'overdue', label: '逾期', isOverdue: true, badge: stats.overdueCount },
     { key: 'today', label: '今日回访', isToday: true, badge: todayFollowupTasks.length },
     { key: 'abnormal', label: '需关注', isAbnormal: true },
     { key: 'normal', label: '恢复中' },
@@ -94,19 +119,35 @@ const PatientPage: React.FC = () => {
   return (
     <View className={styles.page}>
       <View className={styles.header}>
-        <Text className={styles.greeting}>医生您好</Text>
-        <Text className={styles.subGreeting}>今天是 {new Date().toLocaleDateString('zh-CN')}</Text>
+        <View className={styles.headerTop}>
+          <View>
+            <Text className={styles.greeting}>医生您好</Text>
+            <Text className={styles.subGreeting}>今天是 {new Date().toLocaleDateString('zh-CN')}</Text>
+          </View>
+          <Button className={styles.calendarBtn} onClick={handleGoCalendar}>
+            📅
+          </Button>
+        </View>
 
         <View className={styles.statsRow}>
           <View className={styles.statCard}>
             <Text className={styles.statNum}>{stats.total}</Text>
             <Text className={styles.statLabel}>总患者数</Text>
           </View>
+          {stats.overdueCount > 0 && (
+            <View
+              className={classnames(styles.statCard, styles.overdueHighlight)}
+              onClick={() => setFilter('overdue')}
+            >
+              <Text className={styles.statNum}>{stats.overdueCount}</Text>
+              <Text className={styles.statLabel}>逾期回访</Text>
+            </View>
+          )}
           <View
             className={classnames(styles.statCard, stats.todayFollowups > 0 && styles.todayHighlight)}
             onClick={() => {
               if (stats.todayFollowups > 0) {
-                Taro.switchTab({ url: '/pages/todo/index' });
+                setFilter('today');
               }
             }}
           >
@@ -144,8 +185,15 @@ const PatientPage: React.FC = () => {
               key={option.key}
               className={classnames(
                 styles.filterBtn,
-                filter === option.key && (option.isAbnormal ? styles.activeAbnormal : styles.active),
-                option.isToday && option.badge > 0 && styles.todayFilter
+                filter === option.key && (
+                  option.isAbnormal
+                    ? styles.activeAbnormal
+                    : option.isOverdue
+                      ? styles.activeOverdue
+                      : styles.active
+                ),
+                option.isToday && option.badge > 0 && styles.todayFilter,
+                option.isOverdue && option.badge > 0 && styles.overdueFilter
               )}
               onClick={() => setFilter(option.key)}
             >
@@ -171,6 +219,7 @@ const PatientPage: React.FC = () => {
             key={patient.id}
             patient={patient}
             todayFollowup={todayFollowupTasks.find(f => f.patientId === patient.id)}
+            isOverdue={overduePatientIds.has(patient.id)}
           />
         ))}
       </View>

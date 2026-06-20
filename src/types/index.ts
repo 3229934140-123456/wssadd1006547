@@ -32,13 +32,14 @@ export type DoctorAction = 'call' | 'nurse' | 'revisit';
 export interface TimelineRecord {
   id: string;
   date: string;
-  type: 'surgery' | 'followup' | 'note';
+  type: 'surgery' | 'followup' | 'pendingFollowup' | 'note';
   title: string;
   description: string;
   isAbnormal: boolean;
   action?: DoctorAction;
   photos?: string[];
   observations?: ObservationItem[];
+  followupId?: string;
 }
 
 export interface FollowupTask {

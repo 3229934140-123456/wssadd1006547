@@ -30,6 +30,11 @@ export const isToday = (dateStr: string): boolean => {
   return dateStr === today;
 };
 
+export const isOverdue = (dateStr: string): boolean => {
+  const today = new Date().toISOString().split('T')[0];
+  return dateStr < today;
+};
+
 export const isTomorrow = (dateStr: string): boolean => {
   const tomorrow = new Date();
   tomorrow.setDate(tomorrow.getDate() + 1);

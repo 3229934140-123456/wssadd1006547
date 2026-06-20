@@ -184,9 +184,24 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     setFollowupTasks(prev => [newTask, ...prev]);
     generateTodoFromFollowup(newTask);
 
+    const pendingRecord: TimelineRecord = {
+      id: `t_${task.patientId}_pending_${newId}`,
+      date: newTask.scheduledDate,
+      type: 'pendingFollowup',
+      title: task.observations.length > 0
+        ? `回访计划：${task.observations.map(o => o.name).join('、')}`
+        : '回访计划',
+      description: task.observations.length > 0
+        ? `观察项：${task.observations.map(o => o.name).join('、')}`
+        : '医生已创建回访任务，请按计划跟进',
+      isAbnormal: newTask.isAbnormal,
+      followupId: newId
+    };
+    addTimelineRecord(task.patientId, pendingRecord);
+
     console.log('[AppContext] Added new followup task for:', task.patientName, 'date:', task.scheduledDate);
     return newId;
-  }, [generateTodoFromFollowup]);
+  }, [generateTodoFromFollowup, addTimelineRecord]);
 
   const updateFollowupTask = useCallback((id: string, updates: Partial<FollowupTask>) => {
     setFollowupTasks(prev => prev.map(t =>
@@ -221,7 +236,14 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         action,
         observations: followup.observations.filter(o => o.value !== undefined)
       };
-      addTimelineRecord(patientId, record);
+      setTimelines(prev => {
+        const existing = prev[patientId] || [];
+        const filtered = existing.filter(r => r.followupId !== followupId);
+        return {
+          ...prev,
+          [patientId]: [record, ...filtered]
+        };
+      });
     }
 
     setPatients(prev => prev.map(p => {

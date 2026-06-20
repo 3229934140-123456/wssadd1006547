@@ -11,6 +11,52 @@
   padding: $spacing-xl $page-padding;
 }
 
+.headerTop {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+.calendarBtn {
+  @include button-reset;
+  width: 72rpx;
+  height: 72rpx;
+  border-radius: $radius-lg;
+  background: rgba(255, 255, 255, 0.2);
+  font-size: 36rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(10px);
+  transition: all $transition-base;
+
+  &:active {
+    transform: scale(0.95);
+    opacity: 0.9;
+  }
+}
+
+.overdueAlert {
+  display: flex;
+  align-items: center;
+  gap: $spacing-sm;
+  background: rgba(255, 255, 255, 0.2);
+  padding: $spacing-sm $spacing-md;
+  border-radius: $radius-md;
+  margin-top: $spacing-md;
+  backdrop-filter: blur(10px);
+}
+
+.overdueAlertIcon {
+  font-size: 28rpx;
+}
+
+.overdueAlertText {
+  font-size: $font-size-sm;
+  color: $color-text-white;
+  font-weight: $font-weight-medium;
+}
+
 .title {
   color: $color-text-white;
   font-size: $font-size-xxl;
@@ -70,6 +116,17 @@
     }
   }
 
+  &.overdueTab {
+    background: rgba(180, 83, 9, 0.15);
+    color: #B45309;
+    font-weight: $font-weight-medium;
+
+    &.active {
+      background: #B45309;
+      color: $color-text-white;
+    }
+  }
+
   &:active {
     opacity: 0.9;
   }
@@ -112,6 +169,12 @@
   &.todayCard {
     border: 2rpx solid $color-primary;
     box-shadow: 0 4rpx 20rpx rgba(15, 118, 110, 0.15);
+  }
+
+  &.overdueCard {
+    border: 2rpx solid #B45309;
+    background: linear-gradient(90deg, rgba(180, 83, 9, 0.08) 0%, $color-bg-card 25%);
+    box-shadow: 0 4rpx 20rpx rgba(180, 83, 9, 0.15);
   }
 
   &:active {
@@ -164,6 +227,11 @@
     background: rgba(148, 163, 184, 0.1);
     color: $color-text-tertiary;
   }
+
+  &.overdue {
+    background: rgba(180, 83, 9, 0.15);
+    color: #B45309;
+  }
 }
 
 .typeTag {
@@ -193,6 +261,18 @@
   50% { opacity: 0.6; }
 }
 
+.overdueTag {
+  display: inline-block;
+  padding: 4rpx $spacing-sm;
+  border-radius: $radius-xs;
+  font-size: $font-size-xs;
+  background: rgba(180, 83, 9, 0.2);
+  color: #B45309;
+  font-weight: $font-weight-semibold;
+  margin-right: $spacing-sm;
+  animation: pulse 1.5s infinite;
+}
+
 .description {
   font-size: $font-size-sm;
   color: $color-text-secondary;
@@ -211,6 +291,11 @@
 .dateInfo {
   font-size: $font-size-sm;
   color: $color-text-tertiary;
+
+  &.overdueText {
+    color: #B45309;
+    font-weight: $font-weight-semibold;
+  }
 }
 
 .actionBtn {
@@ -226,6 +311,10 @@
   &:active {
     opacity: 0.9;
     transform: scale(0.98);
+  }
+
+  &.overdueBtn {
+    background: #B45309;
   }
 }
 

@@ -4,16 +4,21 @@ import Taro from '@tarojs/taro';
 import classnames from 'classnames';
 import styles from './index.module.scss';
 import type { Patient, FollowupTask } from '@/types';
-import { getDaysAfterSurgery, isToday } from '@/utils/date';
+import { getDaysAfterSurgery, isToday, isOverdue, getDaysDiff } from '@/utils/date';
 
 interface PatientCardProps {
   patient: Patient;
   todayFollowup?: FollowupTask;
+  isOverdue?: boolean;
   onClick?: () => void;
 }
 
-const PatientCard: React.FC<PatientCardProps> = ({ patient, todayFollowup, onClick }) => {
+const PatientCard: React.FC<PatientCardProps> = ({ patient, todayFollowup, isOverdue: overdue, onClick }) => {
   const daysAfterSurgery = getDaysAfterSurgery(patient.surgeryDate);
+  const isNextOverdue = patient.nextFollowupDate ? isOverdue(patient.nextFollowupDate) : false;
+  const overdueDays = isNextOverdue && patient.nextFollowupDate
+    ? getDaysDiff(patient.nextFollowupDate, new Date().toISOString().split('T')[0])
+    : 0;
 
   const statusText = {
     normal: '恢复中',
@@ -41,7 +46,23 @@ const PatientCard: React.FC<PatientCardProps> = ({ patient, todayFollowup, onCli
   };
 
   return (
-    <View className={classnames(styles.card, todayFollowup && styles.todayCard)} onClick={handleClick}>
+    <View
+      className={classnames(
+        styles.card,
+        todayFollowup && styles.todayCard,
+        overdue && styles.overdueCard
+      )}
+      onClick={handleClick}
+    >
+      {overdue && !todayFollowup && (
+        <View className={styles.overdueBanner} onClick={handleClick}>
+          <View className={styles.overdueBannerLeft}>
+            <Text className={styles.overdueBannerDot}>●</Text>
+            <Text className={styles.overdueBannerText}>回访已逾期 {overdueDays} 天</Text>
+          </View>
+          <Text className={styles.overdueBannerAction}>立即处理 ›</Text>
+        </View>
+      )}
       {todayFollowup && (
         <View className={styles.todayBanner} onClick={handleTodayFollowup}>
           <View className={styles.todayBannerLeft}>
@@ -105,6 +126,10 @@ const PatientCard: React.FC<PatientCardProps> = ({ patient, todayFollowup, onCli
         {todayFollowup ? (
           <View className={styles.todayFollowupTag} onClick={handleTodayFollowup}>
             今日回访
+          </View>
+        ) : overdue ? (
+          <View className={styles.overdueFollowupTag}>
+            逾期 {overdueDays} 天
           </View>
         ) : patient.nextFollowupDate && (
           <View className={styles.nextFollowup}>

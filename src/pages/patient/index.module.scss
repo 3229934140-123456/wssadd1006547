@@ -11,6 +11,32 @@
   padding-bottom: $spacing-xl;
 }
 
+.headerTop {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: $spacing-lg;
+}
+
+.calendarBtn {
+  @include button-reset;
+  width: 72rpx;
+  height: 72rpx;
+  border-radius: $radius-lg;
+  background: rgba(255, 255, 255, 0.2);
+  font-size: 36rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(10px);
+  transition: all $transition-base;
+
+  &:active {
+    transform: scale(0.95);
+    opacity: 0.9;
+  }
+}
+
 .greeting {
   color: $color-text-white;
   font-size: $font-size-xl;
@@ -57,6 +83,11 @@
 
 .statCard.todayHighlight {
   background: rgba(255, 255, 255, 0.35);
+  cursor: pointer;
+}
+
+.statCard.overdueHighlight {
+  background: rgba(180, 83, 9, 0.35);
   cursor: pointer;
 }
 
@@ -121,6 +152,12 @@
     border-color: $color-error;
   }
 
+  &.activeOverdue {
+    background: #B45309;
+    color: $color-text-white;
+    border-color: #B45309;
+  }
+
   &.todayFilter {
     background: rgba(15, 118, 110, 0.1);
     color: $color-primary;
@@ -131,6 +168,19 @@
       background: $color-primary;
       color: $color-text-white;
       border-color: $color-primary;
+    }
+  }
+
+  &.overdueFilter {
+    background: rgba(180, 83, 9, 0.15);
+    color: #B45309;
+    border-color: rgba(180, 83, 9, 0.3);
+    font-weight: $font-weight-medium;
+
+    &.active {
+      background: #B45309;
+      color: $color-text-white;
+      border-color: #B45309;
     }
   }
 

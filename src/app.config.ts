@@ -6,7 +6,8 @@ export default defineAppConfig({
     'pages/patient-detail/index',
     'pages/add-followup/index',
     'pages/followup-detail/index',
-    'pages/add-patient/index'
+    'pages/add-patient/index',
+    'pages/calendar/index'
   ],
   window: {
     backgroundTextStyle: 'light',

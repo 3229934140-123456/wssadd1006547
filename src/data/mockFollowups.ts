@@ -3,6 +3,15 @@ import type { FollowupTask, TimelineRecord, TodoItem } from '@/types';
 export const mockTimelines: Record<string, TimelineRecord[]> = {
   '1': [
     {
+      id: 't1-4',
+      date: '2026-06-20',
+      type: 'pendingFollowup',
+      title: '回访计划：疼痛评分、面部肿胀、伤口渗血',
+      description: '观察项：疼痛评分、面部肿胀、伤口渗血，患者已反馈异常',
+      isAbnormal: true,
+      followupId: 'f1'
+    },
+    {
       id: 't1-1',
       date: '2026-06-15',
       type: 'surgery',
@@ -41,6 +50,15 @@ export const mockTimelines: Record<string, TimelineRecord[]> = {
   ],
   '2': [
     {
+      id: 't2-3',
+      date: '2026-06-20',
+      type: 'pendingFollowup',
+      title: '回访计划：疼痛评分、咬合不适、面部肿胀',
+      description: '观察项：疼痛评分、咬合不适、面部肿胀，待患者填写',
+      isAbnormal: false,
+      followupId: 'f2'
+    },
+    {
       id: 't2-1',
       date: '2026-06-18',
       type: 'surgery',
@@ -63,6 +81,15 @@ export const mockTimelines: Record<string, TimelineRecord[]> = {
     }
   ],
   '3': [
+    {
+      id: 't3-4',
+      date: '2026-06-18',
+      type: 'pendingFollowup',
+      title: '回访计划：疼痛评分、面部肿胀',
+      description: '观察项：疼痛评分、面部肿胀，回访已逾期',
+      isAbnormal: false,
+      followupId: 'f5'
+    },
     {
       id: 't3-1',
       date: '2026-06-10',
@@ -94,6 +121,15 @@ export const mockTimelines: Record<string, TimelineRecord[]> = {
     }
   ],
   '4': [
+    {
+      id: 't4-4',
+      date: '2026-06-20',
+      type: 'pendingFollowup',
+      title: '回访计划：疼痛评分、面部肿胀、咬合不适',
+      description: '观察项：疼痛评分、面部肿胀、咬合不适，患者反馈异常',
+      isAbnormal: true,
+      followupId: 'f3'
+    },
     {
       id: 't4-1',
       date: '2026-06-12',
@@ -130,6 +166,69 @@ export const mockTimelines: Record<string, TimelineRecord[]> = {
         { type: 'pain', name: '疼痛评分', value: 5 }
       ]
     }
+  ],
+  '10': [
+    {
+      id: 't10-3',
+      date: '2026-06-20',
+      type: 'pendingFollowup',
+      title: '回访计划：疼痛评分、面部肿胀、伤口渗血',
+      description: '观察项：疼痛评分、面部肿胀、伤口渗血，患者反馈异常',
+      isAbnormal: true,
+      followupId: 'f4'
+    },
+    {
+      id: 't10-1',
+      date: '2026-06-16',
+      type: 'surgery',
+      title: '种植手术完成',
+      description: '右上567种植，植骨，非即刻负重',
+      isAbnormal: false
+    },
+    {
+      id: 't10-2',
+      date: '2026-06-19',
+      type: 'followup',
+      title: '术后3天回访',
+      description: '植骨区域仍有疼痛，护士已记录并上报医生',
+      isAbnormal: false,
+      action: 'nurse',
+      observations: [
+        { type: 'pain', name: '疼痛评分', value: 5 },
+        { type: 'swelling', name: '面部肿胀', value: 2 }
+      ]
+    }
+  ],
+  '8': [
+    {
+      id: 't8-3',
+      date: '2026-06-22',
+      type: 'pendingFollowup',
+      title: '回访计划：疼痛评分、面部肿胀',
+      description: '观察项：疼痛评分、面部肿胀，待回访日处理',
+      isAbnormal: false,
+      followupId: 'f6'
+    },
+    {
+      id: 't8-1',
+      date: '2026-06-19',
+      type: 'surgery',
+      title: '种植手术完成',
+      description: '左下7种植，非即刻负重，未植骨',
+      isAbnormal: false
+    },
+    {
+      id: 't8-2',
+      date: '2026-06-20',
+      type: 'followup',
+      title: '术后1天回访',
+      description: '无明显不适，护士电话回访完成',
+      isAbnormal: false,
+      action: 'nurse',
+      observations: [
+        { type: 'pain', name: '疼痛评分', value: 1 }
+      ]
+    }
   ]
 };
 
@@ -154,7 +253,7 @@ export const mockFollowupTasks: FollowupTask[] = [
     id: 'f2',
     patientId: '2',
     patientName: '李秀英',
-    scheduledDate: '2026-06-21',
+    scheduledDate: '2026-06-20',
     status: 'pending',
     isAbnormal: false,
     observations: [
@@ -168,7 +267,7 @@ export const mockFollowupTasks: FollowupTask[] = [
     id: 'f3',
     patientId: '4',
     patientName: '陈美玲',
-    scheduledDate: '2026-06-22',
+    scheduledDate: '2026-06-20',
     status: 'pending',
     isAbnormal: true,
     observations: [
@@ -184,7 +283,7 @@ export const mockFollowupTasks: FollowupTask[] = [
     id: 'f4',
     patientId: '10',
     patientName: '郑晓燕',
-    scheduledDate: '2026-06-21',
+    scheduledDate: '2026-06-20',
     status: 'pending',
     isAbnormal: true,
     observations: [
@@ -194,6 +293,33 @@ export const mockFollowupTasks: FollowupTask[] = [
     ],
     patientSymptoms: '植骨的地方还是有点疼，早上刷牙有少量血丝',
     createdAt: '2026-06-20'
+  },
+  {
+    id: 'f5',
+    patientId: '3',
+    patientName: '王建国',
+    scheduledDate: '2026-06-18',
+    status: 'pending',
+    isAbnormal: false,
+    observations: [
+      { type: 'pain', name: '疼痛评分', value: 3 },
+      { type: 'swelling', name: '面部肿胀', value: 1 }
+    ],
+    patientSymptoms: '伤口有些发痒，其他还好',
+    createdAt: '2026-06-10'
+  },
+  {
+    id: 'f6',
+    patientId: '8',
+    patientName: '周小芳',
+    scheduledDate: '2026-06-22',
+    status: 'pending',
+    isAbnormal: false,
+    observations: [
+      { type: 'pain', name: '疼痛评分' },
+      { type: 'swelling', name: '面部肿胀' }
+    ],
+    createdAt: '2026-06-19'
   }
 ];
 
@@ -215,7 +341,7 @@ export const mockTodoItems: TodoItem[] = [
     patientName: '陈美玲',
     type: 'abnormal',
     title: '肿胀未消退',
-    description: '术后6天面部仍明显肿胀，咬合不适加重',
+    description: '面部仍明显肿胀，咬合不适加重，疼痛5分',
     priority: 'high',
     scheduledDate: '2026-06-20',
     isRead: false
@@ -226,7 +352,7 @@ export const mockTodoItems: TodoItem[] = [
     patientName: '郑晓燕',
     type: 'abnormal',
     title: '植骨区疼痛',
-    description: '患者反馈植骨区域疼痛，刷牙有少量血丝',
+    description: '植骨区域疼痛，刷牙有少量血丝，疼痛6分',
     priority: 'medium',
     scheduledDate: '2026-06-20',
     isRead: true
@@ -236,14 +362,25 @@ export const mockTodoItems: TodoItem[] = [
     patientId: '2',
     patientName: '李秀英',
     type: 'pending',
-    title: '术后3天常规回访',
+    title: '术后2天常规回访',
     description: '即刻负重患者，需确认咬合情况',
     priority: 'low',
-    scheduledDate: '2026-06-21',
+    scheduledDate: '2026-06-20',
     isRead: true
   },
   {
     id: 'todo5',
+    patientId: '3',
+    patientName: '王建国',
+    type: 'urgent',
+    title: '逾期回访 - 术后8天',
+    description: '回访已逾期2天，请尽快处理',
+    priority: 'high',
+    scheduledDate: '2026-06-18',
+    isRead: false
+  },
+  {
+    id: 'todo6',
     patientId: '8',
     patientName: '周小芳',
     type: 'pending',
